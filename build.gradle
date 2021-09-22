@@ -1,0 +1,19 @@
+plugins {
+	id 'java-library'
+}
+
+repositories {
+	mavenCentral()
+
+	maven {
+		url = 'https://maven.pkg.github.com/Brownshome/Vecmath'
+		credentials {
+			username = project.properties['gpr.usr']
+			password = project.properties['gpr.key']
+		}
+	}
+}
+
+dependencies {
+	api 'brownshome:vecmath:(3.0.0, 4.0.0]'
+}
