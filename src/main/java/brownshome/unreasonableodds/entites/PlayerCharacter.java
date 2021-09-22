@@ -2,29 +2,36 @@ package brownshome.unreasonableodds.entites;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.Set;
 
 import brownshome.unreasonableodds.Player;
 import brownshome.unreasonableodds.Universe;
-import brownshome.vecmath.Rot2;
-import brownshome.vecmath.Vec2;
+import brownshome.unreasonableodds.components.Position;
 
 /**
  * A version of the protagonist of the game that is currently being controlled by the
  * player.
  */
-public final class PlayerCharacter extends Character {
+public final class PlayerCharacter extends Character<PlayerCharacter> {
 	private final Player player;
 	private final Duration timeTravelEnergy;
 
-	private PlayerCharacter(Player player, Duration timeTravelEnergy, Vec2 position, Rot2 orientation) {
-		super(position, orientation);
+	private PlayerCharacter(Position position, Player player, Duration timeTravelEnergy) {
+		super(position);
+
+		this.player = player;
+		this.timeTravelEnergy = timeTravelEnergy;
+	}
+
+	private PlayerCharacter(PlayerCharacter root, Position position, Player player, Duration timeTravelEnergy) {
+		super(root, position);
+
 		this.player = player;
 		this.timeTravelEnergy = timeTravelEnergy;
 	}
 
 	private PlayerCharacter withTimeTravelEnergy(Duration energy) {
-		return new PlayerCharacter(player, energy, position(), orientation());
+		return new PlayerCharacter(root(), position(), player, energy);
 	}
 
 	/**
@@ -60,6 +67,10 @@ public final class PlayerCharacter extends Character {
 			jumpOutOfUniverse();
 		}
 
+		/**
+		 * The earliest time that can be travelled to
+		 * @return the early limit of travel
+		 */
 		public Instant earliestTimeTravelLocation() {
 			var limit = universe().now().minus(timeTravelEnergy);
 
@@ -68,6 +79,10 @@ public final class PlayerCharacter extends Character {
 					: limit;
 		}
 
+		/**
+		 * Gets the set of universes that can be visited
+		 * @return the set of reachable universes
+		 */
 		public Set<Universe> reachableUniverses() {
 			long jumps = timeTravelEnergy.dividedBy(rules().timePerUniverseJump());
 

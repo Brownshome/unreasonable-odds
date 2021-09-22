@@ -1,6 +1,10 @@
 plugins {
 	id 'java-library'
+	id 'maven-publish'
 }
+
+group = 'brownshome'
+version = '0.1.0-SNAPSHOT'
 
 repositories {
 	mavenCentral()
@@ -8,12 +12,68 @@ repositories {
 	maven {
 		url = 'https://maven.pkg.github.com/Brownshome/Vecmath'
 		credentials {
-			username = project.properties['gpr.usr']
-			password = project.properties['gpr.key']
+			username project.properties['gpr.usr']
+			password project.properties['gpr.key']
+		}
+	}
+}
+
+java {
+	withJavadocJar()
+	withSourcesJar()
+}
+
+tasks.withType(JavaCompile) {
+	options.encoding 'utf-8'
+}
+
+dependencies {
+	api 'brownshome:vecmath:[3.5.0, 4.0.0)'
+}
+
+publishing {
+	repositories {
+		maven {
+			name = 'GitHubPackages'
+			url = uri('https://maven.pkg.github.com/Brownshome/unreasonable-odds')
+			credentials {
+				username project.properties['gpr.usr']
+				password project.properties['gpr.key']
+			}
+		}
+	}
+
+	publications {
+		mavenJava(MavenPublication) {
+			artifactId 'unreasonable-odds'
+			from components.java
+
+			pom {
+				name = 'Unreasonable Odds'
+				description = 'The core gameplay and logic for Unreasonable Odds'
+				url = 'https://github.com/Brownshome/unreasonable-odds'
+				developers {
+					developer {
+						id = 'Brownshome'
+						name = 'James Brown'
+						email = 'jamesphone180@gmail.com'
+					}
+				}
+				scm {
+					connection = 'scm:git:git://github.com/Brownshome/unreasonable-odds.git'
+					url = 'https://github.com/Brownshome/unreasonable-odds'
+				}
+			}
 		}
 	}
 }
 
 dependencies {
-	api 'brownshome:vecmath:(3.0.0, 4.0.0]'
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:[5.0.0, 6.0.0)'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:[5.0.0, 6.0.0)'
+}
+
+test {
+	useJUnitPlatform()
+	enableAssertions true
 }

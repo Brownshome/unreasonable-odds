@@ -1,31 +1,65 @@
 package brownshome.unreasonableodds.entites;
 
+import java.time.Duration;
+
 import brownshome.unreasonableodds.Universe;
-import brownshome.vecmath.Rot2;
-import brownshome.vecmath.Vec2;
 
 /**
- * A physical entity in the universe. This is an immutable object
+ * An entity in the universe. This is an immutable object
  */
-public abstract class Entity implements Steppable {
-	private final Vec2 position;
-	private final Rot2 orientation;
+public abstract class Entity<THIS extends Entity<?>> {
+	private final THIS root;
 
-	protected Entity(Vec2 position, Rot2 orientation) {
-		this.position = position;
-		this.orientation = orientation;
+	/**
+	 * Creates an entity
+	 * @param root the entity object that this one was derived from. This must be a root entity
+	 */
+	protected Entity(THIS root) {
+		assert root.isRoot();
+
+		this.root = root;
 	}
 
-	public Vec2 position() {
-		return position;
+	/**
+	 * Creates a root entity
+	 */
+	@SuppressWarnings("unchecked")
+	protected Entity() {
+		root = (THIS) this;
 	}
 
-	public Rot2 orientation() {
-		return orientation;
+	/**
+	 * Checks if this entity is the same as the other given entity. Two entities are considered the same if they came
+	 * from the same root-object. This can be used to compare across time and across universes
+	 * @param other the other entity, may not be null
+	 * @return if the two entities share a root
+	 */
+	public final boolean sameEntity(Entity<THIS> other) {
+		return root == other.root;
 	}
 
-	@Override
+	/**
+	 * Returns the entity that originally created this one
+	 * @return the root
+	 */
+	public final THIS root() {
+		return root;
+	}
+
+	/**
+	 * Checks if this entity has no parent
+	 * @return true if this is a root entity
+	 */
+	public final boolean isRoot() {
+		return root == this;
+	}
+
+	/**
+	 * Steps this object forward
+	 *
+	 * @param step an object containing information about this step
+	 */
 	public void step(Universe.UniverseStep step) {
-		step.addSteppable(this);
+		step.addEntity(this);
 	}
 }

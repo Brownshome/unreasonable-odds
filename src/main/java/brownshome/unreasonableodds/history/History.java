@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
+import brownshome.unreasonableodds.Multiverse;
 import brownshome.unreasonableodds.Universe;
 
 /**
@@ -18,10 +19,19 @@ public final class History {
 		this.view = view;
 	}
 
+	/**
+	 * Creates a blank history
+	 * @return a history with no universes in it
+	 */
 	public static History blankHistory() {
 		return new History(new LinkedList<>(), Collections.emptyList());
 	}
 
+	/**
+	 * Adds a new universe to the history
+	 * @param universe the universe to add
+	 * @return a new history
+	 */
 	public History expandHistory(Universe universe) {
 		if (history.size() != view.size()) {
 			// A new branching history, copy the existing chain
@@ -36,13 +46,17 @@ public final class History {
 		return new History(new LinkedList<>(view), view);
 	}
 
-	public Universe getUniverse(Instant when) {
+	/**
+	 * Gets a universe at a specified time
+	 * @param when the time to retrieve; this must be within the range that this history covers inclusive
+	 * @param multiverse the surrounding multiverse
+	 * @return a universe
+	 */
+	public Universe getUniverse(Instant when, Multiverse multiverse) {
 		Universe past = null;
 		Duration pastDistance = null;
 
-		for (var iterator = view.listIterator(); iterator.hasNext(); ) {
-			var future = iterator.next();
-
+		for (Universe future : view) {
 			var futureDistance = Duration.between(when, future.now());
 			if (!futureDistance.isNegative()) {
 				if (futureDistance.isZero()) {
@@ -51,10 +65,7 @@ public final class History {
 
 				assert past != null : "Time must not be before the earliest entry in the history";
 
-				double totalDistance = futureDistance.plus(pastDistance).toNanos();
-				double weight = pastDistance.toNanos() / totalDistance;
-
-				return Universe.interpolate(past, weight, future);
+				return multiverse.stepDisconnectedUniverse(past, pastDistance);
 			}
 
 			past = future;
