@@ -17,14 +17,40 @@ public final class Multiverse {
 		this.universes = universes;
 	}
 
+	public static Multiverse createMultiverse(Rules rules, List<Universe> universes) {
+		return new Multiverse(rules, universes);
+	}
+
 	/**
 	 * A single step of the multiverse
 	 */
 	public abstract class MultiverseStep {
 		private final Duration stepSize;
+		private final boolean isHistorical;
+
+		private MultiverseStep(Duration stepSize, boolean isHistorical) {
+			this.stepSize = stepSize;
+			this.isHistorical = isHistorical;
+		}
 
 		private MultiverseStep(Duration stepSize) {
-			this.stepSize = stepSize;
+			this(stepSize, false);
+		}
+
+		public MultiverseStep makeHistoricalStep() {
+			var parent = this;
+
+			return new MultiverseStep(stepSize, true) {
+				@Override
+				public void addUniverse(Universe universe) {
+					parent.addUniverse(universe);
+				}
+
+				@Override
+				public void stepInUniverse(Universe universe, Entity entity) {
+					parent.stepInUniverse(universe, entity);
+				}
+			};
 		}
 
 		/**
@@ -51,6 +77,10 @@ public final class Multiverse {
 			return rules;
 		}
 
+		public final boolean isHistorical() {
+			return isHistorical;
+		}
+
 		/**
 		 * Adds a universe to this multiverse. The universe will not be stepped this step
 		 * @param universe the universe to add
@@ -62,7 +92,7 @@ public final class Multiverse {
 		 * @param universe the universe to interact with
 		 * @param entity the entity to step into the universe
 		 */
-		public abstract void stepInUniverse(Universe universe, Entity<?> entity);
+		public abstract void stepInUniverse(Universe universe, Entity entity);
 	}
 
 	/**
@@ -70,7 +100,7 @@ public final class Multiverse {
 	 * @param stepSize the amount to step
 	 */
 	public void step(Duration stepSize) {
-		record ExternalSteps(Universe.UniverseStep step, List<Entity<?>> entities) {
+		record ExternalSteps(Universe.UniverseStep step, List<Entity> entities) {
 			ExternalSteps() {
 				this(null, new ArrayList<>());
 			}
@@ -89,7 +119,7 @@ public final class Multiverse {
 				return new ExternalSteps(step);
 			}
 
-			void addEntity(Entity<?> s) {
+			void addEntity(Entity s) {
 				if (step != null) {
 					s.step(step);
 				} else {
@@ -108,7 +138,7 @@ public final class Multiverse {
 			}
 
 			@Override
-			public void stepInUniverse(Universe universe, Entity<?> entity) {
+			public void stepInUniverse(Universe universe, Entity entity) {
 				externalSteps.compute(universe, (u, external) -> {
 					if (external == null) {
 						external = new ExternalSteps();
@@ -173,7 +203,7 @@ public final class Multiverse {
 			}
 
 			@Override
-			public void stepInUniverse(Universe universe, Entity<?> entity) {
+			public void stepInUniverse(Universe universe, Entity entity) {
 				assert false;
 			}
 		};

@@ -12,26 +12,27 @@ import brownshome.unreasonableodds.components.Position;
  * A version of the protagonist of the game that is currently being controlled by the
  * player.
  */
-public final class PlayerCharacter extends Character<PlayerCharacter> {
+public class PlayerCharacter extends Character {
 	private final Player player;
 	private final Duration timeTravelEnergy;
 
-	private PlayerCharacter(Position position, Player player, Duration timeTravelEnergy) {
+	protected PlayerCharacter(Position position, Player player, Duration timeTravelEnergy) {
 		super(position);
 
 		this.player = player;
 		this.timeTravelEnergy = timeTravelEnergy;
 	}
 
-	private PlayerCharacter(PlayerCharacter root, Position position, Player player, Duration timeTravelEnergy) {
-		super(root, position);
-
-		this.player = player;
-		this.timeTravelEnergy = timeTravelEnergy;
+	public static PlayerCharacter createCharacter(Position position, Player player, Duration timeTravelEnergy) {
+		return new PlayerCharacter(position, player, timeTravelEnergy);
 	}
 
-	private PlayerCharacter withTimeTravelEnergy(Duration energy) {
-		return new PlayerCharacter(root(), position(), player, energy);
+	public Player player() {
+		return player;
+	}
+
+	public Duration timeTravelEnergy() {
+		return timeTravelEnergy;
 	}
 
 	/**
@@ -96,6 +97,19 @@ public final class PlayerCharacter extends Character<PlayerCharacter> {
 
 	@Override
 	public void step(Universe.UniverseStep step) {
-		player.performActions(new PlayerActions(step));
+		if (step.multiverseStep().isHistorical()) {
+			// Step the new historical character into this universe
+			createHistoricalCharacter().step(step);
+		} else {
+			player.performActions(new PlayerActions(step));
+		}
+	}
+
+	protected PlayerCharacter withTimeTravelEnergy(Duration energy) {
+		return new PlayerCharacter(position(), player, energy);
+	}
+
+	protected HistoricalCharacter createHistoricalCharacter() {
+		return new HistoricalCharacter(position());
 	}
 }

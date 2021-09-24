@@ -6,25 +6,27 @@ plugins {
 group = 'brownshome'
 version = '0.1.0-SNAPSHOT'
 
-repositories {
-	mavenCentral()
+allprojects {
+	repositories {
+		mavenCentral()
 
-	maven {
-		url = 'https://maven.pkg.github.com/Brownshome/Vecmath'
-		credentials {
-			username project.properties['gpr.usr']
-			password project.properties['gpr.key']
+		maven {
+			url = 'https://maven.pkg.github.com/Brownshome/Vecmath'
+			credentials {
+				username project.properties['gpr.usr']
+				password project.properties['gpr.key']
+			}
 		}
+	}
+
+	tasks.withType(JavaCompile) {
+		options.encoding 'utf-8'
 	}
 }
 
 java {
 	withJavadocJar()
 	withSourcesJar()
-}
-
-tasks.withType(JavaCompile) {
-	options.encoding 'utf-8'
 }
 
 dependencies {

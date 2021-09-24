@@ -1,0 +1,18 @@
+plugins {
+	id 'application'
+}
+
+apply plugin: brownshome.unreasonableodds.gradle.GdxPlugin
+
+gdx {
+	version = '1.10.0'
+}
+
+dependencies {
+	implementation rootProject
+}
+
+run {
+	mainClass = 'brownshome.unreasonableodds.gdx.Main'
+	mainModule = 'brownshome.unreasonableodds.gdx'
+}

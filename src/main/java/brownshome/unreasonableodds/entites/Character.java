@@ -1,27 +1,21 @@
 package brownshome.unreasonableodds.entites;
 
+import java.time.Duration;
+import java.time.Instant;
+
 import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.components.Position;
+import brownshome.unreasonableodds.components.Positioned;
+import brownshome.vecmath.Vec2;
 
 /**
  * The main protagonist of the game
  */
-public abstract class Character<THIS extends Character<?>> extends Entity<THIS> {
+public abstract class Character extends Entity implements Positioned {
 	private final Position position;
 
 	/**
-	 * Creates a non-root character
-	 * @param root the root
-	 * @param position the position of this character
-	 */
-	protected Character(THIS root, Position position) {
-		super(root);
-
-		this.position = position;
-	}
-
-	/**
-	 * Creates a root character
+	 * Creates a character
 	 * @param position the position of this character
 	 */
 	protected Character(Position position) {
@@ -47,7 +41,7 @@ public abstract class Character<THIS extends Character<?>> extends Entity<THIS> 
 		final void jumpOutOfUniverse() {
 			checkFinalAction();
 
-			JumpScar.create(position.position(), step);
+			step.addEntity(createJumpScar(position().position(), step.rules().jumpScarDuration()));
 		}
 
 		/**
@@ -98,13 +92,25 @@ public abstract class Character<THIS extends Character<?>> extends Entity<THIS> 
 		public final Rules rules() {
 			return step.rules();
 		}
+
+		/**
+		 * The current time in this universe
+		 * @return the time
+		 */
+		public final Instant now() {
+			return universe().now();
+		}
+	}
+
+	protected JumpScar createJumpScar(Vec2 position, Duration jumpScarDuration) {
+		return new JumpScar(position, jumpScarDuration);
 	}
 
 	/**
 	 * The position of this character
 	 * @return the position
 	 */
-	public Position position() {
+	public final Position position() {
 		return position;
 	}
 }

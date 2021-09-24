@@ -6,9 +6,9 @@ import brownshome.unreasonableodds.components.Position;
 /**
  * A version of the protagonist that is controlled by historical data
  */
-public final class HistoricalCharacter extends Character<HistoricalCharacter> {
-	private HistoricalCharacter(HistoricalCharacter root, Position position) {
-		super(root, position);
+public class HistoricalCharacter extends Character {
+	protected HistoricalCharacter(Position position) {
+		super(position);
 	}
 
 	@Override

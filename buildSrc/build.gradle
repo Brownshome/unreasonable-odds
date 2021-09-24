@@ -1,0 +1,10 @@
+repositories {
+	gradlePluginPortal()
+}
+
+def gdxVersion = '1.10.0'
+
+dependencies {
+	implementation 'de.jjohannes.gradle:extra-java-module-info:0.9'
+	implementation "com.badlogicgames.gdx:gdx-tools:${gdxVersion}"
+}

@@ -13,16 +13,19 @@ import brownshome.unreasonableodds.history.History;
 /**
  * A single universe in the multiverse. This is an immutable object
  */
-public final class Universe {
+public class Universe {
 	private final Instant now;
-
-	private final List<Entity<?>> entities;
+	private final List<Entity> entities;
 	private final History history;
 
-	private Universe(Universe parent, Duration stepSize, ArrayList<Entity<?>> entities) {
-		this.now = parent.now.plus(stepSize);
-		this.history = parent.history.expandHistory(this);
+	protected Universe(Instant now, List<Entity> entities, History previousHistory) {
+		this.now = now;
 		this.entities = entities;
+		this.history = previousHistory.expandHistory(this);
+	}
+
+	public static Universe createUniverse(Instant beginning, List<Entity> entities) {
+		return new Universe(beginning, entities, History.blankHistory());
 	}
 
 	/**
@@ -80,10 +83,10 @@ public final class Universe {
 		 * @param c the handler
 		 * @return the new step object
 		 */
-		public final UniverseStep withHandler(Consumer<? super Entity<?>> c) {
+		public final UniverseStep withHandler(Consumer<? super Entity> c) {
 			return new UniverseStep(multiverseStep) {
 				@Override
-				public void addEntity(Entity<?> entity) {
+				public void addEntity(Entity entity) {
 					c.accept(entity);
 				}
 			};
@@ -95,14 +98,14 @@ public final class Universe {
 		 * @return a step object than can be used to interact with the new universe
 		 */
 		public final UniverseStep timeTravel(Instant instant) {
-			return history().getUniverse(instant, multiverse()).step(multiverseStep);
+			return history().getUniverse(instant, multiverse()).step(multiverseStep.makeHistoricalStep());
 		}
 
 		/**
 		 * Adds a new entity to this universe, triggering any handlers registered on this step
 		 * @param entity the entity to add
 		 */
-		public abstract void addEntity(Entity<?> entity);
+		public abstract void addEntity(Entity entity);
 
 		/**
 		 * The rules of this game
@@ -119,16 +122,16 @@ public final class Universe {
 	 * @return a universe step that can be used to further interact with the newly created universe
 	 */
 	public UniverseStep step(Multiverse.MultiverseStep multiverseStep) {
-		var newEntities = new ArrayList<Entity<?>>();
+		var newEntities = new ArrayList<Entity>();
 
 		var step = new UniverseStep(multiverseStep) {
 			@Override
-			public void addEntity(Entity<?> entity) {
+			public void addEntity(Entity entity) {
 				newEntities.add(entity);
 			}
 		};
 
-		multiverseStep.addUniverse(new Universe(this, multiverseStep.stepSize(), newEntities));
+		multiverseStep.addUniverse(createSteppedUniverse(multiverseStep.stepSize(), newEntities));
 
 		for (var s : entities) {
 			s.step(step);
@@ -137,12 +140,16 @@ public final class Universe {
 		return step;
 	}
 
+	protected Universe createSteppedUniverse(Duration stepSize, List<Entity> newEntities) {
+		return new Universe(now.plus(stepSize), newEntities, history);
+	}
+
 	/**
-	 * The time that is considered 'now' for this universe object. These times may or may not be related to real time
+	 * The time that is considered <em>now</em> for this universe object. These times may or may not be related to real time
 	 * in any way.
 	 * @return now
 	 */
-	public Instant now() {
+	public final Instant now() {
 		return now;
 	}
 
@@ -151,7 +158,7 @@ public final class Universe {
 	 * in any way.
 	 * @return the beginning of the universe
 	 */
-	public Instant beginning() {
-		return Instant.EPOCH;
+	public final Instant beginning() {
+		return history.beginning();
 	}
 }

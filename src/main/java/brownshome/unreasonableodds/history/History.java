@@ -12,11 +12,11 @@ import brownshome.unreasonableodds.Universe;
  */
 public final class History {
 	private final List<Universe> history;
-	private final List<Universe> view;
+	private final int size;
 
-	private History(List<Universe> history, List<Universe> view) {
+	private History(List<Universe> history, int size) {
 		this.history = history;
-		this.view = view;
+		this.size = size;
 	}
 
 	/**
@@ -24,7 +24,7 @@ public final class History {
 	 * @return a history with no universes in it
 	 */
 	public static History blankHistory() {
-		return new History(new LinkedList<>(), Collections.emptyList());
+		return new History(new LinkedList<>(), 0);
 	}
 
 	/**
@@ -33,17 +33,17 @@ public final class History {
 	 * @return a new history
 	 */
 	public History expandHistory(Universe universe) {
-		if (history.size() != view.size()) {
+		if (history.size() != size) {
 			// A new branching history, copy the existing chain
 			return copyHistory().expandHistory(universe);
 		}
 
 		history.add(universe);
-		return new History(history, history.subList(0, history.size()));
+		return new History(history, history.size());
 	}
 
 	private History copyHistory() {
-		return new History(new LinkedList<>(view), view);
+		return new History(new LinkedList<>(history.subList(0, size)), size);
 	}
 
 	/**
@@ -56,7 +56,7 @@ public final class History {
 		Universe past = null;
 		Duration pastDistance = null;
 
-		for (Universe future : view) {
+		for (Universe future : history.subList(0, size)) {
 			var futureDistance = Duration.between(when, future.now());
 			if (!futureDistance.isNegative()) {
 				if (futureDistance.isZero()) {
@@ -73,5 +73,13 @@ public final class History {
 		}
 
 		throw new IllegalArgumentException("Time in the future");
+	}
+
+	/**
+	 * Gets the beginning of this history
+	 * @return the beginning
+	 */
+	public Instant beginning() {
+		return history.get(0).now();
 	}
 }
