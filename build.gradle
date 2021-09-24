@@ -17,6 +17,14 @@ allprojects {
 				password project.properties['gpr.key']
 			}
 		}
+
+		maven {
+			url = 'https://maven.pkg.github.com/Brownshome/logging'
+			credentials {
+				username project.properties['gpr.usr']
+				password project.properties['gpr.key']
+			}
+		}
 	}
 
 	tasks.withType(JavaCompile) {
