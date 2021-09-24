@@ -12,12 +12,9 @@ import org.gradle.api.tasks.*;
 
 public abstract class PackTextureTask extends DefaultTask {
 	@Inject
-	protected abstract ProviderFactory getProviders();
-
-	@Inject
 	protected abstract ProjectLayout getLayout();
 
-	public final Provider<TexturePacker.Settings> settings = getProviders().provider(TexturePacker.Settings::new);
+	public final TexturePacker.Settings settings = new TexturePacker.Settings();
 
 	@Input
 	public abstract Property<String> getPackFileName();
@@ -35,13 +32,17 @@ public abstract class PackTextureTask extends DefaultTask {
 		getPackFileName().convention("packed-textures");
 		getOutputDir().convention(getLayout().getBuildDirectory().dir(getName()));
 		getInputDir().convention(getProject().getLayout().getProjectDirectory().dir("image").dir("unpacked"));
+
+		settings.scale = new float[] { 0.5f };
+		settings.maxHeight = 4096;
+		settings.maxWidth = 4096;
 	}
 
 	@TaskAction
 	public void run() {
 		getLogger().info("Running texture packer");
 
-		TexturePacker.process(settings.get(),
+		TexturePacker.process(settings,
 				getInputDir().get().getAsFile().getAbsolutePath(),
 				getOutputDir().get().getAsFile().getAbsolutePath(),
 				getPackFileName().get());
