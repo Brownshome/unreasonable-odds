@@ -52,7 +52,13 @@ public class PlayerCharacter extends Character {
 			assert instant.isBefore(universe().now()) && !earliestTimeTravelLocation().isAfter(instant);
 
 			var distance = Duration.between(instant, universe().now());
-			withTimeTravelEnergy(timeTravelEnergy.minus(distance)).step(step().timeTravel(instant));
+			var newUniverseStep = step()
+					.timeTravel(instant)
+					.step(step().multiverseStep());
+
+			withTimeTravelEnergy(timeTravelEnergy.minus(distance))
+					.step(newUniverseStep);
+
 			jumpOutOfUniverse();
 		}
 
@@ -96,13 +102,22 @@ public class PlayerCharacter extends Character {
 	}
 
 	@Override
-	public void step(Universe.UniverseStep step) {
-		if (step.multiverseStep().isHistorical()) {
-			// Step the new historical character into this universe
-			createHistoricalCharacter().step(step);
-		} else {
-			player.performActions(new PlayerActions(step));
+	protected PlayerCharacter nextEntity(Universe.UniverseStep step) {
+		var actions = new PlayerActions(step);
+		player.performActions(actions);
+		var next = (PlayerCharacter) actions.next();
+
+		if (next == null) {
+			return null;
 		}
+
+		double nanosGained = step.stepSize().toNanos() * step.rules().energyGainRate();
+		return next.withTimeTravelEnergy(next.timeTravelEnergy.plus(Duration.ofNanos((long) nanosGained)));
+	}
+
+	@Override
+	public HistoricalCharacter createHistoricalEntity() {
+		return createHistoricalCharacter();
 	}
 
 	protected PlayerCharacter withTimeTravelEnergy(Duration energy) {

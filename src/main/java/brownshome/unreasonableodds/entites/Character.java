@@ -6,7 +6,6 @@ import java.time.Instant;
 import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.components.Positioned;
-import brownshome.vecmath.MVec2;
 import brownshome.vecmath.Vec2;
 
 /**
@@ -28,29 +27,28 @@ public abstract class Character extends Entity implements Positioned {
 	 */
 	public class Actions {
 		private final Universe.UniverseStep step;
+
+		private Character nextCharacter = null;
 		private boolean actionTaken = false;
 
-		Actions(Universe.UniverseStep step) {
+		protected Actions(Universe.UniverseStep step) {
 			assert step != null;
 
 			this.step = step;
 		}
 
-		/**
-		 * Jumps the character out of this universe.
-		 */
-		final void jumpOutOfUniverse() {
-			checkFinalAction();
-
-			step.addEntity(createJumpScar(position().position(), step.rules().jumpScarDuration()));
+		protected final void setNext(Character character) {
+			assert !actionTaken;
+			actionTaken = true;
+			nextCharacter = character;
 		}
 
 		/**
-		 * An assertion check that validates that only one final action is taken
+		 * Jumps the character out of this universe.
 		 */
-		final void checkFinalAction() {
-			assert !actionTaken;
-			actionTaken = true;
+		protected final void jumpOutOfUniverse() {
+			step.addEntity(createJumpScar(position().position(), step.rules().jumpScarDuration()));
+			setNext(null);
 		}
 
 		/**
@@ -58,11 +56,9 @@ public abstract class Character extends Entity implements Positioned {
 		 * @param movementDirection the direction to move. If the length of this vector is greater than 1.0 it will be normalized
 		 */
 		public final void finaliseMove(Vec2 movementDirection) {
-			checkFinalAction();
-
 			double l = movementDirection.lengthSq();
 			if (l == 0) {
-				Character.super.step(step);
+				setNext(Character.this);
 			} else {
 				if (l > 1.0) {
 					var tmp = movementDirection.copy();
@@ -73,15 +69,19 @@ public abstract class Character extends Entity implements Positioned {
 				var newPosition = position.position().copy();
 				newPosition.scaleAdd(movementDirection, step.seconds());
 
-				step.addEntity(withPosition(new Position(newPosition, position.orientation())));
+				setNext(withPosition(new Position(newPosition, position.orientation())));
 			}
+		}
+
+		protected final Character next() {
+			return nextCharacter;
 		}
 
 		/**
 		 * Returns the step object
 		 * @return step
 		 */
-		final Universe.UniverseStep step() {
+		protected final Universe.UniverseStep step() {
 			return step;
 		}
 
@@ -89,7 +89,7 @@ public abstract class Character extends Entity implements Positioned {
 		 * The universe this action will take place in
 		 * @return the universe
 		 */
-		final Universe universe() {
+		protected final Universe universe() {
 			return step.universe();
 		}
 
@@ -97,7 +97,7 @@ public abstract class Character extends Entity implements Positioned {
 		 * The multiverse
 		 * @return the multiverse
 		 */
-		final Multiverse multiverse() {
+		protected final Multiverse multiverse() {
 			return step.multiverse();
 		}
 

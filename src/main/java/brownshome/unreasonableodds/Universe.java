@@ -4,8 +4,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import brownshome.unreasonableodds.entites.Entity;
 import brownshome.unreasonableodds.history.History;
@@ -24,8 +22,8 @@ public class Universe {
 		this.history = previousHistory.expandHistory(this);
 	}
 
-	public static Universe createUniverse(Instant beginning, List<Entity> entities) {
-		return new Universe(beginning, entities, History.blankHistory());
+	public static Universe createUniverse(Instant epoch, List<Entity> entities) {
+		return new Universe(epoch, entities, History.blankHistory());
 	}
 
 	/**
@@ -34,6 +32,19 @@ public class Universe {
 	 */
 	public final History history() {
 		return history;
+	}
+
+	public Universe createHistoricalUniverse() {
+		var newEntities = new ArrayList<Entity>(entities.size());
+		for (var e : entities) {
+			var historical = e.createHistoricalEntity();
+
+			if (historical != null) {
+				newEntities.add(historical);
+			}
+		}
+
+		return createNextUniverse(now, newEntities);
 	}
 
 	/**
@@ -103,10 +114,10 @@ public class Universe {
 		/**
 		 * Creates a new universe by time-travelling back into the past
 		 * @param instant the instant to travel back to
-		 * @return a step object than can be used to interact with the new universe
+		 * @return the universe
 		 */
-		public final UniverseStep timeTravel(Instant instant) {
-			return history().getUniverse(instant, multiverse()).step(multiverseStep.makeHistoricalStep());
+		public final Universe timeTravel(Instant instant) {
+			return history().getUniverse(instant, multiverse());
 		}
 
 		/**
@@ -133,7 +144,7 @@ public class Universe {
 		var newEntities = new ArrayList<Entity>();
 		var step = createUniverseStep(multiverseStep, newEntities::add);
 
-		multiverseStep.addUniverse(createSteppedUniverse(multiverseStep.stepSize(), newEntities));
+		multiverseStep.addUniverse(createNextUniverse(now.plus(multiverseStep.stepSize()), newEntities));
 
 		for (var s : entities) {
 			s.step(step);
@@ -151,8 +162,8 @@ public class Universe {
 		};
 	}
 
-	protected Universe createSteppedUniverse(Duration stepSize, List<Entity> newEntities) {
-		return new Universe(now.plus(stepSize), newEntities, history);
+	protected Universe createNextUniverse(Instant now, List<Entity> newEntities) {
+		return new Universe(now, newEntities, history);
 	}
 
 	/**

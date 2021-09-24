@@ -13,14 +13,14 @@ public class HistoricalCharacter extends Character {
 	}
 
 	@Override
-	public void step(Universe.UniverseStep step) {
-		var actions = new Actions(step);
-
-		actions.finaliseMove(Vec2.ZERO);
+	protected HistoricalCharacter withPosition(Position position) {
+		return new HistoricalCharacter(position);
 	}
 
 	@Override
-	protected HistoricalCharacter withPosition(Position position) {
-		return new HistoricalCharacter(position);
+	protected HistoricalCharacter nextEntity(Universe.UniverseStep step) {
+		var actions = new Actions(step);
+		actions.finaliseMove(Vec2.ZERO);
+		return (HistoricalCharacter) actions.next();
 	}
 }

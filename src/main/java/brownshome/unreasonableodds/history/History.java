@@ -60,12 +60,12 @@ public final class History {
 			var futureDistance = Duration.between(when, future.now());
 			if (!futureDistance.isNegative()) {
 				if (futureDistance.isZero()) {
-					return future;
+					return future.createHistoricalUniverse();
 				}
 
 				assert past != null : "Time must not be before the earliest entry in the history";
 
-				return multiverse.stepDisconnectedUniverse(past, pastDistance);
+				return multiverse.stepDisconnectedUniverse(past.createHistoricalUniverse(), pastDistance);
 			}
 
 			past = future;

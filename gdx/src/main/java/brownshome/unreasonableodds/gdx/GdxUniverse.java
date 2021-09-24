@@ -21,8 +21,8 @@ public class GdxUniverse extends Universe {
 	}
 
 	@Override
-	protected GdxUniverse createSteppedUniverse(Duration stepSize, List<Entity> newEntities) {
-		return new GdxUniverse(now().plus(stepSize), newEntities, history());
+	protected GdxUniverse createNextUniverse(Instant now, List<Entity> newEntities) {
+		return new GdxUniverse(now, newEntities, history());
 	}
 
 	@Override

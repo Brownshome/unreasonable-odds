@@ -26,31 +26,9 @@ public final class Multiverse {
 	 */
 	public abstract class MultiverseStep {
 		private final Duration stepSize;
-		private final boolean isHistorical;
-
-		private MultiverseStep(Duration stepSize, boolean isHistorical) {
-			this.stepSize = stepSize;
-			this.isHistorical = isHistorical;
-		}
 
 		private MultiverseStep(Duration stepSize) {
-			this(stepSize, false);
-		}
-
-		public MultiverseStep makeHistoricalStep() {
-			var parent = this;
-
-			return new MultiverseStep(stepSize, true) {
-				@Override
-				public void addUniverse(Universe universe) {
-					parent.addUniverse(universe);
-				}
-
-				@Override
-				public void stepInUniverse(Universe universe, Entity entity) {
-					parent.stepInUniverse(universe, entity);
-				}
-			};
+			this.stepSize = stepSize;
 		}
 
 		/**
@@ -83,14 +61,6 @@ public final class Multiverse {
 		 */
 		public final Rules rules() {
 			return rules;
-		}
-
-		/**
-		 * Gets if this step is a step creating a new historical universe
-		 * @return if this step is a step creating a new historical universe
-		 */
-		public final boolean isHistorical() {
-			return isHistorical;
 		}
 
 		/**
@@ -209,7 +179,7 @@ public final class Multiverse {
 
 			@Override
 			public void addUniverse(Universe universe) {
-				assert result != null;
+				assert result == null;
 
 				result = universe;
 			}

@@ -1,5 +1,6 @@
 package brownshome.unreasonableodds.gdx;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -55,11 +56,13 @@ public class GdxPlayer implements Player {
 		queuedActions.add(a -> {
 			Instant earliestLocation = a.earliestTimeTravelLocation();
 
-			if (earliestLocation.equals(a.now())) {
+			var distance = Duration.between(earliestLocation, a.now()).dividedBy(2);
+
+			if (distance.isZero()) {
 				return false;
 			}
 
-			a.timeTravel(earliestLocation);
+			a.timeTravel(earliestLocation.plus(distance));
 
 			return true;
 		});

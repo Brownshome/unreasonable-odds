@@ -35,9 +35,11 @@ public class JumpScar extends Entity {
 	}
 
 	@Override
-	public void step(Universe.UniverseStep step) {
+	protected JumpScar nextEntity(Universe.UniverseStep step) {
 		if (lifetime.compareTo(step.stepSize()) >= 0) {
-			step.addEntity(new JumpScar(position, lifetime.minus(step.stepSize())));
+			return new JumpScar(position, lifetime.minus(step.stepSize()));
 		}
+
+		return null;
 	}
 }

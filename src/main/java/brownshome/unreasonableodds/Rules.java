@@ -69,4 +69,8 @@ public class Rules {
 	protected Position createSpawnPosition(Random random) {
 		return new Position(Vec2.of(random.nextDouble(), random.nextDouble()), Rot2.IDENTITY);
 	}
+
+	public double energyGainRate() {
+		return 1.0;
+	}
 }
