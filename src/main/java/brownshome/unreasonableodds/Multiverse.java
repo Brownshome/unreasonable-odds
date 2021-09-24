@@ -62,6 +62,14 @@ public final class Multiverse {
 		}
 
 		/**
+		 * The number of seconds in this step
+		 * @return a double
+		 */
+		public final double seconds() {
+			return stepSize.toNanos() / 1e9;
+		}
+
+		/**
 		 * The parent multiverse
 		 * @return the multiverse
 		 */
@@ -77,6 +85,10 @@ public final class Multiverse {
 			return rules;
 		}
 
+		/**
+		 * Gets if this step is a step creating a new historical universe
+		 * @return if this step is a step creating a new historical universe
+		 */
 		public final boolean isHistorical() {
 			return isHistorical;
 		}
@@ -210,7 +222,8 @@ public final class Multiverse {
 
 		origin.step(disconnectedStep);
 
-		assert disconnectedStep.result != null;
+		assert disconnectedStep.result != null : "At the time stepped to, the universe was destroyed";
+
 		return disconnectedStep.result;
 	}
 }

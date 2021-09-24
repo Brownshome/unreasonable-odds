@@ -15,7 +15,7 @@ import brownshome.unreasonableodds.gdx.components.Renderable;
 
 public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 	private static final TextureRegionCache REGION_CACHE = new TextureRegionCache("character");
-	private static final Vec2 SIZE = Vec2.of(40, 40);
+	private static final Vec2 SIZE = Vec2.of(0.1, 0.1);
 
 	private final RenderComponent renderComponent;
 
@@ -45,6 +45,11 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 	@Override
 	protected PlayerCharacter withTimeTravelEnergy(Duration energy) {
 		return new GdxPlayerCharacter(position(), player(), energy, renderComponent);
+	}
+
+	@Override
+	protected GdxPlayerCharacter withPosition(Position position) {
+		return new GdxPlayerCharacter(position, player(), timeTravelEnergy(), renderComponent.withPosition(position));
 	}
 
 	@Override

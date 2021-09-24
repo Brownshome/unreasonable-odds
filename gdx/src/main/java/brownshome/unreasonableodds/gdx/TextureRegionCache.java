@@ -19,7 +19,10 @@ public final class TextureRegionCache {
 		}
 
 		this.atlas = atlas;
+		cachedRegion = atlas.findRegion(regionName);
 
-		return cachedRegion = atlas.findRegion(regionName);
+		assert cachedRegion != null;
+
+		return cachedRegion;
 	}
 }

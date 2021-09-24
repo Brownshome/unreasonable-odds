@@ -6,6 +6,7 @@ import java.time.Instant;
 import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.components.Positioned;
+import brownshome.vecmath.MVec2;
 import brownshome.vecmath.Vec2;
 
 /**
@@ -53,12 +54,27 @@ public abstract class Character extends Entity implements Positioned {
 		}
 
 		/**
-		 * States that there will be no further actions made this step
+		 * Finishes moves for this step
+		 * @param movementDirection the direction to move. If the length of this vector is greater than 1.0 it will be normalized
 		 */
-		public final void endStep() {
+		public final void finaliseMove(Vec2 movementDirection) {
 			checkFinalAction();
 
-			Character.super.step(step);
+			double l = movementDirection.lengthSq();
+			if (l == 0) {
+				Character.super.step(step);
+			} else {
+				if (l > 1.0) {
+					var tmp = movementDirection.copy();
+					tmp.normalize();
+					movementDirection = tmp;
+				}
+
+				var newPosition = position.position().copy();
+				newPosition.scaleAdd(movementDirection, step.seconds());
+
+				step.addEntity(withPosition(new Position(newPosition, position.orientation())));
+			}
 		}
 
 		/**
@@ -105,6 +121,8 @@ public abstract class Character extends Entity implements Positioned {
 	protected JumpScar createJumpScar(Vec2 position, Duration jumpScarDuration) {
 		return new JumpScar(position, jumpScarDuration);
 	}
+
+	protected abstract Character withPosition(Position position);
 
 	/**
 	 * The position of this character

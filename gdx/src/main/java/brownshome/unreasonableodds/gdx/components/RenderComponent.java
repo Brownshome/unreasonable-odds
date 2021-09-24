@@ -10,6 +10,13 @@ import com.badlogic.gdx.math.Affine2;
 import brownshome.unreasonableodds.gdx.ApplicationResources;
 
 public record RenderComponent(ApplicationResources resources, TextureRegion region, Vec2 size, Position position) {
+	public RenderComponent {
+		assert resources != null;
+		assert region != null;
+		assert size != null;
+		assert position != null;
+	}
+
 	public void render() {
 		var position = position();
 		var transform = new Affine2();
@@ -19,5 +26,9 @@ public record RenderComponent(ApplicationResources resources, TextureRegion regi
 		transform.preTranslate((float) position.position().x(), (float) position.position().y());
 
 		resources().batch().draw(region(), (float) size.x(), (float) size.y(), transform);
+	}
+
+	public RenderComponent withPosition(Position position) {
+		return new RenderComponent(resources, region, size, position);
 	}
 }

@@ -32,7 +32,7 @@ public class Universe {
 	 * Returns the history of this universe
 	 * @return the history of this universe
 	 */
-	public History history() {
+	public final History history() {
 		return history;
 	}
 
@@ -52,6 +52,14 @@ public class Universe {
 		 */
 		public final Duration stepSize() {
 			return multiverseStep.stepSize();
+		}
+
+		/**
+		 * The number of seconds in this step
+		 * @return a double
+		 */
+		public final double seconds() {
+			return multiverseStep.seconds();
 		}
 
 		/**
@@ -123,13 +131,7 @@ public class Universe {
 	 */
 	public UniverseStep step(Multiverse.MultiverseStep multiverseStep) {
 		var newEntities = new ArrayList<Entity>();
-
-		var step = new UniverseStep(multiverseStep) {
-			@Override
-			public void addEntity(Entity entity) {
-				newEntities.add(entity);
-			}
-		};
+		var step = createUniverseStep(multiverseStep, newEntities::add);
 
 		multiverseStep.addUniverse(createSteppedUniverse(multiverseStep.stepSize(), newEntities));
 
@@ -138,6 +140,15 @@ public class Universe {
 		}
 
 		return step;
+	}
+
+	protected UniverseStep createUniverseStep(Multiverse.MultiverseStep multiverseStep, Consumer<Entity> newEntities) {
+		return new UniverseStep(multiverseStep) {
+			@Override
+			public void addEntity(Entity entity) {
+				newEntities.accept(entity);
+			}
+		};
 	}
 
 	protected Universe createSteppedUniverse(Duration stepSize, List<Entity> newEntities) {

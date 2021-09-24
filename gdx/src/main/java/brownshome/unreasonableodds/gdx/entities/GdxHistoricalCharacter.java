@@ -17,4 +17,9 @@ public class GdxHistoricalCharacter extends HistoricalCharacter implements Rende
 	public RenderComponent renderComponent() {
 		return renderComponent;
 	}
+
+	@Override
+	protected GdxHistoricalCharacter withPosition(Position position) {
+		return new GdxHistoricalCharacter(position, renderComponent.withPosition(position));
+	}
 }

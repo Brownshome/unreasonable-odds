@@ -9,11 +9,8 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.utils.Align;
 
-import brownshome.unreasonableodds.gdx.entities.GdxRules;
-
 final class CreateMultiverseScreen extends SubScreen {
 	private final ApplicationResources resources;
-
 	private final OrthographicCamera camera;
 
 	CreateMultiverseScreen(ApplicationResources resources) {
@@ -40,8 +37,7 @@ final class CreateMultiverseScreen extends SubScreen {
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-		var multiverse = new GdxRules(resources).createMultiverse(List.of(Character.Actions::endStep));
-		nextScreen(new MultiverseScreen(resources, multiverse));
+		nextScreen(new MultiverseScreen(resources, new GdxRules(resources)));
 
 		return true;
 	}

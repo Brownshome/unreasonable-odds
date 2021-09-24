@@ -13,6 +13,8 @@ dependencies {
 }
 
 run {
+	enableAssertions true
+
 	mainClass = 'brownshome.unreasonableodds.gdx.Main'
 	mainModule = 'brownshome.unreasonableodds.gdx'
 }

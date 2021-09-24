@@ -109,6 +109,11 @@ public class PlayerCharacter extends Character {
 		return new PlayerCharacter(position(), player, energy);
 	}
 
+	@Override
+	protected PlayerCharacter withPosition(Position position) {
+		return new PlayerCharacter(position, player, timeTravelEnergy);
+	}
+
 	protected HistoricalCharacter createHistoricalCharacter() {
 		return new HistoricalCharacter(position());
 	}
