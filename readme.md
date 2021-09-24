@@ -17,3 +17,23 @@ Limiting the number of active universes is important; There are several possible
  - Generation of jump energy is limited by the number of active universes.
  
 With the time-travel on death mechanic the player will become very hard to kill... So possibly other aims will need to be considered
+
+## Building
+The project requires a reasonably recent version of Java and Gradle installed. It has been tested on:
+
+| Java        | Gradle |
+| ----------- | ------ |
+| OpenJDK 16  | 7.1.1  |
+
+Additionally, the gradle properties `gpr.usr` and `gpr.key` must be set to valid GitHub credentials as some of the libraries used in this project are hosted on GitHubPackages.
+
+There are many ways to acheive this, but one way is to create `~/.gradle/gradle.properties` with the following properties:
+```
+gpr.usr=username
+gpr.key=GitHub access key
+```
+
+This key only needs to access public packages, so a new key with minimal permissions should be created for this purpose.
+
+## Running
+Run with `gradle run`. This will download all required dependencies and compile then run the project.
