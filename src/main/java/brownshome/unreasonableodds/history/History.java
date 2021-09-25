@@ -53,17 +53,19 @@ public final class History {
 	 * @return a universe
 	 */
 	public Universe getUniverse(Instant when, Multiverse multiverse) {
+		assert size > 0;
+
 		Universe past = null;
 		Duration pastDistance = null;
 
 		for (Universe future : history.subList(0, size)) {
 			var futureDistance = Duration.between(when, future.now());
-			if (!futureDistance.isNegative()) {
-				if (futureDistance.isZero()) {
-					return future.createHistoricalUniverse();
-				}
-
+			if (futureDistance.compareTo(Duration.ZERO) > 0) {
 				assert past != null : "Time must not be before the earliest entry in the history";
+
+				if (pastDistance.isZero()) {
+					return past.createHistoricalUniverse();
+				}
 
 				return multiverse.stepDisconnectedUniverse(past.createHistoricalUniverse(), pastDistance);
 			}
@@ -72,7 +74,9 @@ public final class History {
 			pastDistance = futureDistance.negated();
 		}
 
-		throw new IllegalArgumentException("Time in the future");
+		assert past.now().equals(when) : "The time must not be greater than the latest entry in the history";
+
+		return past.createHistoricalUniverse();
 	}
 
 	/**

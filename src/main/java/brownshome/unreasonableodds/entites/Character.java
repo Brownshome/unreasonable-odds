@@ -47,7 +47,7 @@ public abstract class Character extends Entity implements Positioned {
 		 * Jumps the character out of this universe.
 		 */
 		protected final void jumpOutOfUniverse() {
-			step.addEntity(createJumpScar(position().position(), step.rules().jumpScarDuration()));
+			createJumpScar(position().position(), step.rules().jumpScarDuration()).addToBuilder(step.builder());
 			setNext(null);
 		}
 

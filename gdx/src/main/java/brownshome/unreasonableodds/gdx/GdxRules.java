@@ -1,12 +1,10 @@
 package brownshome.unreasonableodds.gdx;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.components.Position;
-import brownshome.unreasonableodds.entites.Entity;
 import brownshome.unreasonableodds.entites.PlayerCharacter;
 import brownshome.unreasonableodds.gdx.entities.GdxPlayerCharacter;
 import brownshome.vecmath.Rot2;
@@ -20,13 +18,18 @@ public final class GdxRules extends Rules {
 	}
 
 	@Override
-	public PlayerCharacter createPlayerCharacter(Position position, Player player, Duration timeTravelEnergy) {
+	public GdxPlayerCharacter createPlayerCharacter(Position position, Player player, Duration timeTravelEnergy) {
 		return GdxPlayerCharacter.createCharacter(position, player, timeTravelEnergy, resources);
 	}
 
 	@Override
-	protected Universe createUniverse(List<Entity> initialEntities) {
-		return GdxUniverse.createUniverse(epoch(), initialEntities);
+	protected GdxUniverse.Builder universeBuilder() {
+		return (GdxUniverse.Builder) GdxUniverse.createEmptyUniverse(epoch(), resources).builder(Duration.ZERO);
+	}
+
+	@Override
+	protected GdxMultiverse createMultiverse(Universe baseUniverse) {
+		return GdxMultiverse.createMultiverse(this, List.of(baseUniverse));
 	}
 
 	@Override

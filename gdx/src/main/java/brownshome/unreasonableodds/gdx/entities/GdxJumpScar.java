@@ -2,10 +2,10 @@ package brownshome.unreasonableodds.gdx.entities;
 
 import java.time.Duration;
 
+import brownshome.unreasonableodds.Universe;
 import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.entites.JumpScar;
-import brownshome.unreasonableodds.gdx.ApplicationResources;
-import brownshome.unreasonableodds.gdx.TextureRegionCache;
+import brownshome.unreasonableodds.gdx.*;
 import brownshome.unreasonableodds.gdx.components.RenderComponent;
 import brownshome.unreasonableodds.gdx.components.Renderable;
 import brownshome.vecmath.Rot2;
@@ -29,5 +29,11 @@ public class GdxJumpScar extends JumpScar implements Renderable {
 	@Override
 	public final RenderComponent renderComponent() {
 		return renderComponent;
+	}
+
+	@Override
+	public void addToBuilder(Universe.Builder builder) {
+		super.addToBuilder(builder);
+		((GdxUniverse.Builder) builder).addRenderable(this);
 	}
 }

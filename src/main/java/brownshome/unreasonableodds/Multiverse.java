@@ -8,17 +8,21 @@ import brownshome.unreasonableodds.entites.Entity;
 /**
  * The base class for the game, representing a collection of universes
  */
-public final class Multiverse {
+public class Multiverse {
 	private final Rules rules;
 	private List<Universe> universes;
 
-	private Multiverse(Rules rules, List<Universe> universes) {
+	protected Multiverse(Rules rules, List<Universe> universes) {
 		this.rules = rules;
 		this.universes = universes;
 	}
 
 	public static Multiverse createMultiverse(Rules rules, List<Universe> universes) {
 		return new Multiverse(rules, universes);
+	}
+
+	protected final List<Universe> universes() {
+		return universes;
 	}
 
 	/**
@@ -81,7 +85,7 @@ public final class Multiverse {
 	 * Steps all universes within this multiverse forward
 	 * @param stepSize the amount to step
 	 */
-	public void step(Duration stepSize) {
+	public final void step(Duration stepSize) {
 		record ExternalSteps(Universe.UniverseStep step, List<Entity> entities) {
 			ExternalSteps() {
 				this(null, new ArrayList<>());
@@ -138,14 +142,22 @@ public final class Multiverse {
 			externalSteps.compute(universe, (u, external) -> external != null ? external.addStep(universeStep) : new ExternalSteps(universeStep));
 		}
 
+		for (var externalStep : externalSteps.values()) {
+			var nextUniverse = externalStep.step.builder().build();
+			if (nextUniverse != null) {
+				newUniverses.add(nextUniverse);
+			}
+		}
+
 		universes = newUniverses;
+		universes.sort(null);
 	}
 
 	/**
 	 * The rules of this game
 	 * @return the rules
 	 */
-	public Rules rules() {
+	public final Rules rules() {
 		return rules;
 	}
 
@@ -155,7 +167,7 @@ public final class Multiverse {
 	 * @param jumps the number of jumps
 	 * @return the set of all reachable universes. This set will not contain the provided universe
 	 */
-	public Set<Universe> reachableUniverses(Universe universe, int jumps) {
+	public final Set<Universe> reachableUniverses(Universe universe, int jumps) {
 		if (jumps == 0) {
 			return Collections.emptySet();
 		}
@@ -173,27 +185,23 @@ public final class Multiverse {
 	 * @param stepSize the duration to step for
 	 * @return the newly stepped universe
 	 */
-	public Universe stepDisconnectedUniverse(Universe origin, Duration stepSize) {
+	public final Universe stepDisconnectedUniverse(Universe origin, Duration stepSize) {
 		var disconnectedStep = new MultiverseStep(stepSize) {
-			Universe result;
-
 			@Override
 			public void addUniverse(Universe universe) {
-				assert result == null;
-
-				result = universe;
+				throw new UnsupportedOperationException("New universes cannot be created from a historical step");
 			}
 
 			@Override
 			public void stepInUniverse(Universe universe, Entity entity) {
-				assert false;
+				throw new UnsupportedOperationException("New universes cannot be created from a historical step");
 			}
 		};
 
-		origin.step(disconnectedStep);
+		var result = origin.step(disconnectedStep).builder().build();
 
-		assert disconnectedStep.result != null : "At the time stepped to, the universe was destroyed";
+		assert result != null : "At the time stepped to, the universe was destroyed";
 
-		return disconnectedStep.result;
+		return result;
 	}
 }

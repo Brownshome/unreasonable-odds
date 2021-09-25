@@ -15,14 +15,14 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
  */
 class MultiverseScreen extends SubScreen {
 	private final ApplicationResources resources;
-	private final Multiverse multiverse;
+	private final GdxMultiverse multiverse;
 	private final OrthographicCamera camera;
 	private final GdxPlayer player;
 
 	MultiverseScreen(ApplicationResources resources, GdxRules rules) {
 		this.resources = resources;
 		this.player = new GdxPlayer();
-		this.multiverse = rules.createMultiverse(List.of(player));
+		this.multiverse = (GdxMultiverse) rules.createMultiverse(List.of(player));
 		this.camera = new OrthographicCamera();
 	}
 
@@ -34,6 +34,7 @@ class MultiverseScreen extends SubScreen {
 		resources.batch().setProjectionMatrix(camera.combined);
 
 		multiverse.step(Duration.ofNanos((long) (delta * 1e9)));
+		multiverse.render();
 
 		resources.batch().end();
 	}

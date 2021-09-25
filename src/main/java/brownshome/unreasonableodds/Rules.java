@@ -50,8 +50,18 @@ public class Rules {
 		return Multiverse.createMultiverse(this, List.of(baseUniverse));
 	}
 
-	protected Universe createUniverse(List<Entity> initialEntities) {
-		return Universe.createUniverse(epoch(), initialEntities);
+	protected Universe.Builder universeBuilder() {
+		return Universe.createEmptyUniverse(epoch()).builder(Duration.ZERO);
+	}
+
+	protected final Universe createUniverse(List<Entity> initialEntities) {
+		var builder = universeBuilder();
+
+		for (Entity e : initialEntities) {
+			e.addToBuilder(builder);
+		}
+
+		return builder.build();
 	}
 
 	/**

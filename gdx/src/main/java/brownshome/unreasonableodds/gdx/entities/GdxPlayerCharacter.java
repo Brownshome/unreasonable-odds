@@ -2,14 +2,14 @@ package brownshome.unreasonableodds.gdx.entities;
 
 import java.time.Duration;
 
+import brownshome.unreasonableodds.Universe;
+import brownshome.unreasonableodds.gdx.*;
 import brownshome.vecmath.Vec2;
 
 import brownshome.unreasonableodds.Player;
 import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.entites.*;
 
-import brownshome.unreasonableodds.gdx.ApplicationResources;
-import brownshome.unreasonableodds.gdx.TextureRegionCache;
 import brownshome.unreasonableodds.gdx.components.RenderComponent;
 import brownshome.unreasonableodds.gdx.components.Renderable;
 
@@ -55,5 +55,11 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 	@Override
 	protected HistoricalCharacter createHistoricalCharacter() {
 		return new GdxHistoricalCharacter(position(), renderComponent);
+	}
+
+	@Override
+	public void addToBuilder(Universe.Builder builder) {
+		super.addToBuilder(builder);
+		((GdxUniverse.Builder) builder).addRenderable(this);
 	}
 }

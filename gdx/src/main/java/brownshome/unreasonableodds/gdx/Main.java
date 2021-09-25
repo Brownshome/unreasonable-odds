@@ -1,6 +1,8 @@
 package brownshome.unreasonableodds.gdx;
 
 import browngu.logging.Logger;
+import brownshome.unreasonableodds.gdx.logger.GdxLogger;
+import com.badlogic.gdx.ApplicationLogger;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
@@ -9,10 +11,20 @@ public class Main extends Game {
 	private ApplicationResources resources;
 
 	public static void main (String[] arg) {
+		Thread.setDefaultUncaughtExceptionHandler((thread, exception) -> {
+			Logger.logger().log(exception, "Uncaught exception", exception);
+		});
+
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 		config.forceExit = false;
 
-		new LwjglApplication(new Main(), config);
+		new LwjglApplication(new Main(), config) {
+			@Override
+			public void setApplicationLogger(ApplicationLogger applicationLogger) {
+				// Override their choice of logger
+				super.setApplicationLogger(new GdxLogger());
+			}
+		};
 	}
 
 	@Override

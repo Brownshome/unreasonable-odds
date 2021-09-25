@@ -3,27 +3,30 @@ package brownshome.unreasonableodds;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.function.Consumer;
 
 import brownshome.unreasonableodds.entites.Entity;
+import brownshome.unreasonableodds.history.BranchRecord;
 import brownshome.unreasonableodds.history.History;
 
 /**
- * A single universe in the multiverse. This is an immutable object
+ * A single universe in the multiverse. This is an immutable object. The ordering of universes is based on the times that
+ * they were split off from each other.
  */
-public class Universe {
+public class Universe implements Comparable<Universe> {
 	private final Instant now;
 	private final List<Entity> entities;
 	private final History history;
+	private final BranchRecord branchRecord;
 
-	protected Universe(Instant now, List<Entity> entities, History previousHistory) {
+	protected Universe(Instant now, List<Entity> entities, History previousHistory, BranchRecord branchRecord) {
 		this.now = now;
 		this.entities = entities;
 		this.history = previousHistory.expandHistory(this);
+		this.branchRecord = branchRecord;
 	}
 
-	public static Universe createUniverse(Instant epoch, List<Entity> entities) {
-		return new Universe(epoch, entities, History.blankHistory());
+	public static Universe createEmptyUniverse(Instant epoch) {
+		return new Universe(epoch, Collections.emptyList(), History.blankHistory(), BranchRecord.blankRecord(epoch));
 	}
 
 	/**
@@ -34,34 +37,101 @@ public class Universe {
 		return history;
 	}
 
+	public final BranchRecord branchRecord() {
+		return branchRecord;
+	}
+
 	public Universe createHistoricalUniverse() {
-		var newEntities = new ArrayList<Entity>(entities.size());
+		Builder builder = newBranchBuilder();
 		for (var e : entities) {
 			var historical = e.createHistoricalEntity();
 
 			if (historical != null) {
-				newEntities.add(historical);
+				historical.addToBuilder(builder);
 			}
 		}
 
-		return createNextUniverse(now, newEntities);
+		return builder.build();
+	}
+
+	/**
+	 * Creates a builder for a universe offset in time from this one by a given amount
+	 * @param offset the offset duration
+	 * @return a builder
+	 */
+	public final Builder builder(Duration offset) {
+		return builder(now.plus(offset), branchRecord);
+	}
+
+	public final Builder newBranchBuilder() {
+		return builder(now, branchRecord.newBranch(now));
+	}
+
+	protected Builder builder(Instant now, BranchRecord branchRecord) {
+		return new Builder(now, branchRecord);
+	}
+
+	public class Builder {
+		private final List<Entity> entities;
+		private final Instant now;
+		private final BranchRecord branchRecord;
+
+		protected Builder(Instant now, BranchRecord branchRecord) {
+			this.now = now;
+			this.entities = new ArrayList<>();
+			this.branchRecord = branchRecord;
+		}
+
+		/**
+		 * Adds a new entity to this universe
+		 * @param entity the entity to add
+		 */
+		public final void addEntity(Entity entity) {
+			entities.add(entity);
+		}
+
+		/**
+		 * The list of entities in the new universe
+		 * @return the list of entities in the new universe
+		 */
+		protected final List<Entity> entities() {
+			return entities;
+		}
+
+		protected final Instant now() {
+			return now;
+		}
+
+		protected final BranchRecord branchRecord() {
+			return branchRecord;
+		}
+
+		/**
+		 * Builds the universe
+		 * @return the new universe
+		 */
+		public Universe build() {
+			return new Universe(now, entities, history, branchRecord);
+		}
 	}
 
 	/**
 	 * A single step of the universe
 	 */
-	public abstract class UniverseStep {
+	public final class UniverseStep {
 		private final Multiverse.MultiverseStep multiverseStep;
+		private final Builder builder;
 
 		private UniverseStep(Multiverse.MultiverseStep multiverseStep) {
 			this.multiverseStep = multiverseStep;
+			this.builder = Universe.this.builder(multiverseStep.stepSize());
 		}
 
 		/**
 		 * The length of this step
 		 * @return a duration greater than zero
 		 */
-		public final Duration stepSize() {
+		public Duration stepSize() {
 			return multiverseStep.stepSize();
 		}
 
@@ -69,7 +139,7 @@ public class Universe {
 		 * The number of seconds in this step
 		 * @return a double
 		 */
-		public final double seconds() {
+		public double seconds() {
 			return multiverseStep.seconds();
 		}
 
@@ -77,7 +147,7 @@ public class Universe {
 		 * The universe this step is for
 		 * @return the universe
 		 */
-		public final Universe universe() {
+		public Universe universe() {
 			return Universe.this;
 		}
 
@@ -85,7 +155,7 @@ public class Universe {
 		 * The parent multiverse
 		 * @return the multiverse
 		 */
-		public final Multiverse multiverse() {
+		public Multiverse multiverse() {
 			return multiverseStep.multiverse();
 		}
 
@@ -93,22 +163,8 @@ public class Universe {
 		 * A reference to the parent multiverse step that initiated this one
 		 * @return the parent multiverse step
 		 */
-		public final Multiverse.MultiverseStep multiverseStep() {
+		public Multiverse.MultiverseStep multiverseStep() {
 			return multiverseStep;
-		}
-
-		/**
-		 * Makes a new step object with a handler that is called whenever an entity is added to this universe
-		 * @param c the handler
-		 * @return the new step object
-		 */
-		public final UniverseStep withHandler(Consumer<? super Entity> c) {
-			return new UniverseStep(multiverseStep) {
-				@Override
-				public void addEntity(Entity entity) {
-					c.accept(entity);
-				}
-			};
 		}
 
 		/**
@@ -116,22 +172,20 @@ public class Universe {
 		 * @param instant the instant to travel back to
 		 * @return the universe
 		 */
-		public final Universe timeTravel(Instant instant) {
+		public Universe timeTravel(Instant instant) {
 			return history().getUniverse(instant, multiverse());
 		}
-
-		/**
-		 * Adds a new entity to this universe, triggering any handlers registered on this step
-		 * @param entity the entity to add
-		 */
-		public abstract void addEntity(Entity entity);
 
 		/**
 		 * The rules of this game
 		 * @return the rules
 		 */
-		public final Rules rules() {
+		public Rules rules() {
 			return multiverseStep.rules();
+		}
+
+		public Builder builder() {
+			return builder;
 		}
 	}
 
@@ -141,10 +195,7 @@ public class Universe {
 	 * @return a universe step that can be used to further interact with the newly created universe
 	 */
 	public UniverseStep step(Multiverse.MultiverseStep multiverseStep) {
-		var newEntities = new ArrayList<Entity>();
-		var step = createUniverseStep(multiverseStep, newEntities::add);
-
-		multiverseStep.addUniverse(createNextUniverse(now.plus(multiverseStep.stepSize()), newEntities));
+		var step = new UniverseStep(multiverseStep);
 
 		for (var s : entities) {
 			s.step(step);
@@ -153,17 +204,9 @@ public class Universe {
 		return step;
 	}
 
-	protected UniverseStep createUniverseStep(Multiverse.MultiverseStep multiverseStep, Consumer<Entity> newEntities) {
-		return new UniverseStep(multiverseStep) {
-			@Override
-			public void addEntity(Entity entity) {
-				newEntities.accept(entity);
-			}
-		};
-	}
-
-	protected Universe createNextUniverse(Instant now, List<Entity> newEntities) {
-		return new Universe(now, newEntities, history);
+	@Override
+	public int compareTo(Universe o) {
+		return branchRecord.compareTo(o.branchRecord);
 	}
 
 	/**

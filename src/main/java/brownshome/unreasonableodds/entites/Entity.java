@@ -28,7 +28,15 @@ public abstract class Entity {
 		var next = nextEntity(step);
 
 		if (next != null) {
-			step.addEntity(next);
+			next.addToBuilder(step.builder());
 		}
+	}
+
+	/**
+	 * Adds this entity to the provided builder
+	 * @param builder the builder to add to
+	 */
+	public void addToBuilder(Universe.Builder builder) {
+		builder.addEntity(this);
 	}
 }

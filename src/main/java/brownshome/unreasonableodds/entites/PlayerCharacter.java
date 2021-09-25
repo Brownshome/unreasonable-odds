@@ -52,12 +52,15 @@ public class PlayerCharacter extends Character {
 			assert instant.isBefore(universe().now()) && !earliestTimeTravelLocation().isAfter(instant);
 
 			var distance = Duration.between(instant, universe().now());
+
 			var newUniverseStep = step()
 					.timeTravel(instant)
 					.step(step().multiverseStep());
 
 			withTimeTravelEnergy(timeTravelEnergy.minus(distance))
 					.step(newUniverseStep);
+
+			step().multiverseStep().addUniverse(newUniverseStep.builder().build());
 
 			jumpOutOfUniverse();
 		}

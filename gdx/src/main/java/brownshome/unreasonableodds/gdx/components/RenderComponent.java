@@ -17,15 +17,16 @@ public record RenderComponent(ApplicationResources resources, TextureRegion regi
 		assert position != null;
 	}
 
-	public void render() {
+	public void render(Affine2 transform) {
 		var position = position();
-		var transform = new Affine2();
+		var localTransform = new Affine2();
 		var size = size();
 
-		transform.setToRotation((float) position.orientation().cos(), (float) position.orientation().sin());
-		transform.preTranslate((float) position.position().x(), (float) position.position().y());
+		localTransform.setToRotation((float) position.orientation().cos(), (float) position.orientation().sin());
+		localTransform.preTranslate((float) position.position().x(), (float) position.position().y());
+		localTransform.mul(transform);
 
-		resources().batch().draw(region(), (float) size.x(), (float) size.y(), transform);
+		resources().batch().draw(region(), (float) size.x(), (float) size.y(), localTransform);
 	}
 
 	public RenderComponent withPosition(Position position) {
