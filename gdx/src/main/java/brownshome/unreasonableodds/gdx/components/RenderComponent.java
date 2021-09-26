@@ -24,7 +24,7 @@ public record RenderComponent(ApplicationResources resources, TextureRegion regi
 
 		localTransform.setToRotation((float) position.orientation().cos(), (float) position.orientation().sin());
 		localTransform.preTranslate((float) position.position().x(), (float) position.position().y());
-		localTransform.mul(transform);
+		localTransform.preMul(transform);
 
 		resources().batch().draw(region(), (float) size.x(), (float) size.y(), localTransform);
 	}

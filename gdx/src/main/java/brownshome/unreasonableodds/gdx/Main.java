@@ -22,6 +22,7 @@ public class Main extends Game {
 			@Override
 			public void setApplicationLogger(ApplicationLogger applicationLogger) {
 				// Override their choice of logger
+				logLevel = LOG_DEBUG;
 				super.setApplicationLogger(new GdxLogger());
 			}
 		};

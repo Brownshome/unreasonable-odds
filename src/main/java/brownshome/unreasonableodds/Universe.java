@@ -64,7 +64,7 @@ public class Universe implements Comparable<Universe> {
 	}
 
 	public final Builder newBranchBuilder() {
-		return builder(now, branchRecord.newBranch(now));
+		return builder(now, branchRecord.newBranch(Duration.between(beginning(), now)));
 	}
 
 	protected Builder builder(Instant now, BranchRecord branchRecord) {

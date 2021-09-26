@@ -58,8 +58,16 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 	}
 
 	@Override
+	protected PlayerCharacter nextEntity(Universe.UniverseStep step) {
+		return super.nextEntity(step);
+	}
+
+	@Override
 	public void addToBuilder(Universe.Builder builder) {
 		super.addToBuilder(builder);
-		((GdxUniverse.Builder) builder).addRenderable(this);
+
+		var gdxBuilder = (GdxUniverse.Builder) builder;
+		gdxBuilder.addRenderable(this);
+		gdxBuilder.flagUniverseAsActive();
 	}
 }

@@ -14,6 +14,8 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
  * A screen that displays a given multiverse
  */
 class MultiverseScreen extends SubScreen {
+	public static final float SIZE_IN_PIXELS = 512f;
+
 	private final ApplicationResources resources;
 	private final GdxMultiverse multiverse;
 	private final OrthographicCamera camera;
@@ -41,13 +43,15 @@ class MultiverseScreen extends SubScreen {
 
 	@Override
 	public void resize(int width, int height) {
+		super.resize(width, height);
+
 		if (width > height) {
-			camera.setToOrtho(false, (float) width / height, 1f);
+			camera.setToOrtho(false, SIZE_IN_PIXELS * width / height, SIZE_IN_PIXELS);
 		} else {
-			camera.setToOrtho(false, 1f, (float) height / width);
+			camera.setToOrtho(false, SIZE_IN_PIXELS, SIZE_IN_PIXELS * height / width);
 		}
 
-		camera.position.set(0.5f, 0.5f, 0f);
+		camera.position.set(0f, 0f, 0f);
 		camera.update();
 	}
 

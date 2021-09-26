@@ -150,7 +150,6 @@ public class Multiverse {
 		}
 
 		universes = newUniverses;
-		universes.sort(null);
 	}
 
 	/**
