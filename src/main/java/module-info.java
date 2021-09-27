@@ -6,6 +6,7 @@ module brownshome.unreasonableodds {
 	exports brownshome.unreasonableodds.components;
 	exports brownshome.unreasonableodds.entites;
 	exports brownshome.unreasonableodds.history;
+	exports brownshome.unreasonableodds.collision;
 
 	requires transitive brownshome.vecmath;
 }

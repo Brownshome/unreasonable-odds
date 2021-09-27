@@ -4,6 +4,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
+import brownshome.unreasonableodds.collision.CollisionDetector;
+import brownshome.unreasonableodds.components.Collidable;
+import brownshome.unreasonableodds.components.CollisionShape;
 import brownshome.unreasonableodds.entites.Entity;
 import brownshome.unreasonableodds.history.BranchRecord;
 import brownshome.unreasonableodds.history.History;
@@ -15,18 +18,21 @@ import brownshome.unreasonableodds.history.History;
 public class Universe implements Comparable<Universe> {
 	private final Instant now;
 	private final List<Entity> entities;
+	private final CollisionDetector collisionDetector;
+
 	private final History history;
 	private final BranchRecord branchRecord;
 
-	protected Universe(Instant now, List<Entity> entities, History previousHistory, BranchRecord branchRecord) {
+	protected Universe(Instant now, List<Entity> entities, History previousHistory, BranchRecord branchRecord, CollisionDetector collisionDetector) {
 		this.now = now;
 		this.entities = entities;
 		this.history = previousHistory.expandHistory(this);
 		this.branchRecord = branchRecord;
+		this.collisionDetector = collisionDetector;
 	}
 
 	public static Universe createEmptyUniverse(Instant epoch) {
-		return new Universe(epoch, Collections.emptyList(), History.blankHistory(), BranchRecord.blankRecord(epoch));
+		return new Universe(epoch, Collections.emptyList(), History.blankHistory(), BranchRecord.blankRecord(epoch), CollisionDetector.createDetector());
 	}
 
 	/**
@@ -39,6 +45,10 @@ public class Universe implements Comparable<Universe> {
 
 	public final BranchRecord branchRecord() {
 		return branchRecord;
+	}
+
+	public final CollisionDetector collisionDetector() {
+		return collisionDetector;
 	}
 
 	public Universe createHistoricalUniverse() {
@@ -75,10 +85,12 @@ public class Universe implements Comparable<Universe> {
 		private final List<Entity> entities;
 		private final Instant now;
 		private final BranchRecord branchRecord;
+		private final List<Collidable> collidables;
 
 		protected Builder(Instant now, BranchRecord branchRecord) {
 			this.now = now;
 			this.entities = new ArrayList<>();
+			this.collidables = new ArrayList<>();
 			this.branchRecord = branchRecord;
 		}
 
@@ -88,6 +100,10 @@ public class Universe implements Comparable<Universe> {
 		 */
 		public final void addEntity(Entity entity) {
 			entities.add(entity);
+		}
+
+		public final void addCollision(Collidable c) {
+			collidables.add(c);
 		}
 
 		/**
@@ -106,12 +122,16 @@ public class Universe implements Comparable<Universe> {
 			return branchRecord;
 		}
 
+		protected final CollisionDetector collisionDetector() {
+			return CollisionDetector.createDetector(collidables);
+		}
+
 		/**
 		 * Builds the universe
 		 * @return the new universe
 		 */
 		public Universe build() {
-			return new Universe(now, entities, history, branchRecord);
+			return new Universe(now, entities, history, branchRecord, collisionDetector());
 		}
 	}
 

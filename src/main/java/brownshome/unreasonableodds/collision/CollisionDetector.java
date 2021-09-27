@@ -1,9 +1,9 @@
 package brownshome.unreasonableodds.collision;
 
-import java.util.BitSet;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
+import brownshome.unreasonableodds.components.Collidable;
 import brownshome.unreasonableodds.components.CollisionShape;
 import brownshome.vecmath.MVec2;
 import brownshome.vecmath.Vec2;
@@ -12,24 +12,32 @@ import brownshome.vecmath.Vec2;
  * Detects collisions between the queried shape and the shapes that make up this detector
  */
 public final class CollisionDetector {
+	private static final int DEFAULT_GRID_SIZE = 64;
+
 	private final int gridSize;
 	private final BitSet[][] grid;
-	private final List<CollisionShape> shapes;
+	private final List<Collidable> shapes;
 
-	private CollisionDetector(int gridSize, BitSet[][] grid, List<CollisionShape> shapes) {
+	private CollisionDetector(int gridSize, BitSet[][] grid, List<Collidable> shapes) {
 		this.gridSize = gridSize;
 		this.grid = grid;
 		this.shapes = shapes;
 	}
 
-	public static CollisionDetector createCollisionDetector(int gridSize, List<CollisionShape> shapes) {
+	public static CollisionDetector createDetector() {
+		return new CollisionDetector(0, new BitSet[0][0], Collections.emptyList());
+	}
+
+	public static CollisionDetector createDetector(List<Collidable> shapes) {
+		int gridSize = DEFAULT_GRID_SIZE;
+
 		BitSet[][] grid = new BitSet[gridSize][gridSize];
 
 		MVec2 min = Vec2.of(0, 0);
 		MVec2 max = Vec2.of(0, 0);
 
 		for (int i = 0; i < shapes.size(); i++) {
-			CollisionShape shape = shapes.get(i);
+			CollisionShape shape = shapes.get(i).collisionShape();
 
 			min.set(shape.lesserExtent());
 			max.set(shape.greaterExtent());
@@ -57,7 +65,7 @@ public final class CollisionDetector {
 		return new CollisionDetector(gridSize, grid, shapes);
 	}
 
-	public void forCollidingShapes(CollisionShape shape, Consumer<CollisionShape> shapeConsumer) {
+	public void forEachCollidingShape(CollisionShape shape, Consumer<Collidable> shapeConsumer) {
 		MVec2 min = shape.lesserExtent().copy();
 		MVec2 max = shape.greaterExtent().copy();
 
@@ -83,8 +91,8 @@ public final class CollisionDetector {
 			}
 		}
 
-		for (int index = combinedSet.nextSetBit(0); index != -1; index = combinedSet.nextSetBit(index)) {
-			if (shapes.get(index).doesCollideWith(shape)) {
+		for (int index = combinedSet.nextSetBit(0); index != -1; index = combinedSet.nextSetBit(index + 1)) {
+			if (shapes.get(index).collisionShape().doesCollideWith(shape)) {
 				shapeConsumer.accept(shapes.get(index));
 			}
 		}

@@ -15,6 +15,7 @@ dependencies {
 
 run {
 	enableAssertions true
+	jvmArgs += ['--enable-preview']
 
 	mainClass = 'brownshome.unreasonableodds.gdx.Main'
 	mainModule = 'brownshome.unreasonableodds.gdx'

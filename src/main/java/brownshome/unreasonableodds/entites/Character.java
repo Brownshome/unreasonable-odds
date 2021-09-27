@@ -4,22 +4,51 @@ import java.time.Duration;
 import java.time.Instant;
 
 import brownshome.unreasonableodds.*;
-import brownshome.unreasonableodds.components.Position;
-import brownshome.unreasonableodds.components.Positioned;
+import brownshome.unreasonableodds.components.CollisionShape;
+import brownshome.unreasonableodds.components.*;
 import brownshome.vecmath.Vec2;
 
 /**
  * The main protagonist of the game
  */
-public abstract class Character extends Entity implements Positioned {
+public abstract class Character extends Entity implements Positioned, Collidable {
+	/**
+	 * The radius of the collision shape for character objects
+	 */
+	protected static final double CHARACTER_RADIUS = 0.1;
+
 	private final Position position;
+	private final CollisionShape collisionShape;
 
 	/**
 	 * Creates a character
 	 * @param position the position of this character
+	 * @param collisionShape the collision shape to use
+	 */
+	protected Character(Position position, CollisionShape collisionShape) {
+		this.position = position;
+		this.collisionShape = collisionShape;
+	}
+
+	/**
+	 * Creates a character with the default circle collision shape
+	 * @param position the position of this character
 	 */
 	protected Character(Position position) {
-		this.position = position;
+		this(position, new CircleCollisionShape(position.position(), CHARACTER_RADIUS));
+	}
+
+	/**
+	 * The position of this character
+	 * @return the position
+	 */
+	public final Position position() {
+		return position;
+	}
+
+	@Override
+	public final CollisionShape collisionShape() {
+		return collisionShape;
 	}
 
 	/**
@@ -31,12 +60,21 @@ public abstract class Character extends Entity implements Positioned {
 		private Character nextCharacter = null;
 		private boolean actionTaken = false;
 
+		/**
+		 * Creates a new actions object for this player
+		 * @param step the contextual step that these actions will take place in
+		 */
 		protected Actions(Universe.UniverseStep step) {
 			assert step != null;
 
 			this.step = step;
 		}
 
+		/**
+		 * Sets the final outcome of these actions. This must be called once and only once on this object
+		 * @param character the final character outcome, this can be null if no character should exist in the new
+		 *                  universe
+		 */
 		protected final void setNext(Character character) {
 			assert !actionTaken;
 			actionTaken = true;
@@ -73,6 +111,10 @@ public abstract class Character extends Entity implements Positioned {
 			}
 		}
 
+		/**
+		 * Gets the character to be added to the next universe
+		 * @return the character to add to the next universe
+		 */
 		protected final Character next() {
 			return nextCharacter;
 		}
@@ -118,17 +160,27 @@ public abstract class Character extends Entity implements Positioned {
 		}
 	}
 
+	/**
+	 * Creates a jump scar at the given position and with the given duration remaining
+	 * @param position the position to create the jump scar
+	 * @param jumpScarDuration the duration remaining of the jump scar
+	 * @return the jump scar
+	 */
 	protected JumpScar createJumpScar(Vec2 position, Duration jumpScarDuration) {
 		return new JumpScar(position, jumpScarDuration);
 	}
 
+	/**
+	 * Creates a new character identical to this one, but with a given position
+	 * @param position the position
+	 * @return a new character
+	 */
 	protected abstract Character withPosition(Position position);
 
-	/**
-	 * The position of this character
-	 * @return the position
-	 */
-	public final Position position() {
-		return position;
+	@Override
+	public void addToBuilder(Universe.Builder builder) {
+		builder.addCollision(this);
+
+		super.addToBuilder(builder);
 	}
 }

@@ -29,6 +29,7 @@ allprojects {
 
 	tasks.withType(JavaCompile) {
 		options.encoding 'utf-8'
+		options.compilerArgs += ['--enable-preview']
 	}
 }
 
@@ -86,4 +87,5 @@ dependencies {
 test {
 	useJUnitPlatform()
 	enableAssertions true
+	jvmArgs += ['--enable-preview']
 }
