@@ -13,17 +13,21 @@ import brownshome.vecmath.Vec2;
 
 public class GdxJumpScar extends JumpScar implements Renderable {
 	private static final TextureRegionCache REGION_CACHE = new TextureRegionCache("jump-scar");
-	private static final Vec2 SCAR_SIZE = Vec2.of(40, 40);
+	private static final Vec2 SCAR_SIZE = Vec2.of(0.05, 0.05);
 
 	private final RenderComponent renderComponent;
 
 	protected GdxJumpScar(Vec2 position, Duration jumpScarDuration, ApplicationResources resources) {
-		super(position, jumpScarDuration);
-
-		this.renderComponent = new RenderComponent(resources,
+		this(position, jumpScarDuration, new RenderComponent(resources,
 				REGION_CACHE.getTextureRegion(resources.atlas()),
 				SCAR_SIZE,
-				new Position(position, Rot2.IDENTITY));
+				new Position(position, Rot2.IDENTITY)));
+	}
+
+	protected GdxJumpScar(Vec2 position, Duration lifetime, RenderComponent renderComponent) {
+		super(position, lifetime);
+
+		this.renderComponent = renderComponent;
 	}
 
 	@Override
@@ -35,5 +39,10 @@ public class GdxJumpScar extends JumpScar implements Renderable {
 	public void addToBuilder(Universe.Builder builder) {
 		super.addToBuilder(builder);
 		((GdxUniverse.Builder) builder).addRenderable(this);
+	}
+
+	@Override
+	protected JumpScar withLifetime(Duration lifetime) {
+		return new GdxJumpScar(position(), lifetime, renderComponent);
 	}
 }
