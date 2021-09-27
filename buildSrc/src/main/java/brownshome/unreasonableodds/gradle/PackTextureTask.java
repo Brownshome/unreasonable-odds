@@ -2,6 +2,7 @@ package brownshome.unreasonableodds.gradle;
 
 import javax.inject.Inject;
 
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.tools.texturepacker.TexturePacker;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
@@ -36,6 +37,8 @@ public abstract class PackTextureTask extends DefaultTask {
 		settings.scale = new float[] { 0.5f };
 		settings.maxHeight = 4096;
 		settings.maxWidth = 4096;
+		settings.filterMin = Texture.TextureFilter.MipMapLinearLinear;
+		settings.filterMag = Texture.TextureFilter.Nearest;
 	}
 
 	@TaskAction
