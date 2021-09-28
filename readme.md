@@ -23,7 +23,7 @@ The project requires a reasonably recent version of Java and Gradle installed. I
 
 | Java        | Gradle |
 | ----------- | ------ |
-| OpenJDK 16  | 7.1.1  |
+| OpenJDK 17  | 7.2    |
 
 Additionally, the gradle properties `gpr.usr` and `gpr.key` must be set to valid GitHub credentials as some of the libraries used in this project are hosted on GitHubPackages.
 
