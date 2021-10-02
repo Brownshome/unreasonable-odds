@@ -3,6 +3,8 @@ package brownshome.unreasonableodds.components;
 import brownshome.vecmath.MVec2;
 import brownshome.vecmath.Vec2;
 
+import static brownshome.unreasonableodds.math.VectorUtils.cross;
+
 public record LineSegmentCollisionShape(Vec2 from, Vec2 to) implements CollisionShape {
 	@Override
 	public Vec2 lesserExtent() {
@@ -157,7 +159,8 @@ public record LineSegmentCollisionShape(Vec2 from, Vec2 to) implements Collision
 		return cross * cross < radiusSquared * ray.lengthSq();
 	}
 
-	private static double cross(Vec2 a, Vec2 b) {
-		return a.x() * b.y() - b.x() * a.y();
+	@Override
+	public Point sweptCollision(CollisionShape shape, Vec2 sweep) {
+		throw new UnsupportedOperationException();
 	}
 }
