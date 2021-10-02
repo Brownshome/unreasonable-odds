@@ -6,7 +6,6 @@ import java.util.*;
 
 import brownshome.unreasonableodds.collision.CollisionDetector;
 import brownshome.unreasonableodds.components.Collidable;
-import brownshome.unreasonableodds.components.CollisionShape;
 import brownshome.unreasonableodds.entites.Entity;
 import brownshome.unreasonableodds.history.BranchRecord;
 import brownshome.unreasonableodds.history.History;

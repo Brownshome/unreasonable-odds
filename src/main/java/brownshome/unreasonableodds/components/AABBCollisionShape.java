@@ -47,7 +47,7 @@ public record AABBCollisionShape(Vec2 lesserExtent, Vec2 greaterExtent) implemen
 	}
 
 	@Override
-	public Point sweptCollision(CollisionShape shape, Vec2 sweep) {
+	public SweptCollision sweptCollision(CollisionShape shape, Vec2 sweep) {
 		return switch (shape) {
 			case AABBCollisionShape aabb -> sweptCollision(aabb, sweep);
 			case CircleCollisionShape circle -> sweptCollision(circle, sweep);
@@ -60,7 +60,7 @@ public record AABBCollisionShape(Vec2 lesserExtent, Vec2 greaterExtent) implemen
 		};
 	}
 
-	public Point sweptCollision(AABBCollisionShape aabb, Vec2 sweep) {
+	public SweptCollision sweptCollision(AABBCollisionShape aabb, Vec2 sweep) {
 		assert !doesCollideWith(aabb);
 
 		MVec2 scale = Vec2.of(1.0 / sweep.x(), 1.0 / sweep.y());
@@ -114,11 +114,11 @@ public record AABBCollisionShape(Vec2 lesserExtent, Vec2 greaterExtent) implemen
 			}
 		}
 
-		if (t >= positiveDistance.x() && t >= negativeDistance.x() || t >= positiveDistance.y() && t >= positiveDistance.y()) {
+		if (t < 0.0 || t >= positiveDistance.x() && t >= negativeDistance.x() || t >= positiveDistance.y() && t >= negativeDistance.y()) {
 			// We have will miss the AABB, the ranges of collision on each axis don't overlap
 			return null;
 		}
 
-		return new Point(point, normal);
+		return new SweptCollision(t, point, normal);
 	}
 }

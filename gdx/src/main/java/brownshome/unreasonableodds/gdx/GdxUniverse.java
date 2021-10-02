@@ -55,7 +55,6 @@ public class GdxUniverse extends Universe implements Renderable {
 		return renderables;
 	}
 
-	@Override
 	public final RenderComponent renderComponent() {
 		return renderComponent;
 	}

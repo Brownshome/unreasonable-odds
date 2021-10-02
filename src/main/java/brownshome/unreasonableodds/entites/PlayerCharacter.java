@@ -7,6 +7,7 @@ import java.util.Set;
 import brownshome.unreasonableodds.Player;
 import brownshome.unreasonableodds.Universe;
 import brownshome.unreasonableodds.components.Position;
+import brownshome.vecmath.Vec2;
 
 /**
  * A version of the protagonist of the game that is currently being controlled by the
@@ -16,15 +17,15 @@ public class PlayerCharacter extends Character {
 	private final Player player;
 	private final Duration timeTravelEnergy;
 
-	protected PlayerCharacter(Position position, Player player, Duration timeTravelEnergy) {
-		super(position);
+	protected PlayerCharacter(Position position, Vec2 velocity, Player player, Duration timeTravelEnergy) {
+		super(position, velocity);
 
 		this.player = player;
 		this.timeTravelEnergy = timeTravelEnergy;
 	}
 
-	public static PlayerCharacter createCharacter(Position position, Player player, Duration timeTravelEnergy) {
-		return new PlayerCharacter(position, player, timeTravelEnergy);
+	public static PlayerCharacter createCharacter(Position position, Vec2 velocity, Player player, Duration timeTravelEnergy) {
+		return new PlayerCharacter(position, velocity, player, timeTravelEnergy);
 	}
 
 	public Player player() {
@@ -105,10 +106,15 @@ public class PlayerCharacter extends Character {
 	}
 
 	@Override
-	protected PlayerCharacter nextEntity(Universe.UniverseStep step) {
+	protected Actions createActions(Universe.UniverseStep step) {
 		var actions = new PlayerActions(step);
 		player.performActions(actions);
-		var next = (PlayerCharacter) actions.next();
+		return actions;
+	}
+
+	@Override
+	protected PlayerCharacter nextEntity(Universe.UniverseStep step) {
+		var next = (PlayerCharacter) super.nextEntity(step);
 
 		if (next == null) {
 			return null;
@@ -124,15 +130,20 @@ public class PlayerCharacter extends Character {
 	}
 
 	protected PlayerCharacter withTimeTravelEnergy(Duration energy) {
-		return new PlayerCharacter(position(), player, energy);
+		return new PlayerCharacter(position(), velocity(), player, energy);
 	}
 
 	@Override
 	protected PlayerCharacter withPosition(Position position) {
-		return new PlayerCharacter(position, player, timeTravelEnergy);
+		return new PlayerCharacter(position, velocity(), player, timeTravelEnergy);
+	}
+
+	@Override
+	protected Character withVelocity(Vec2 velocity) {
+		return new PlayerCharacter(position(), velocity, player, timeTravelEnergy);
 	}
 
 	protected HistoricalCharacter createHistoricalCharacter() {
-		return new HistoricalCharacter(position());
+		return new HistoricalCharacter(position(), velocity());
 	}
 }

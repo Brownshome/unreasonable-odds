@@ -5,6 +5,7 @@ module brownshome.unreasonableodds {
 	exports brownshome.unreasonableodds;
 	exports brownshome.unreasonableodds.components;
 	exports brownshome.unreasonableodds.entites;
+	exports brownshome.unreasonableodds.entites.tile;
 	exports brownshome.unreasonableodds.history;
 	exports brownshome.unreasonableodds.collision;
 

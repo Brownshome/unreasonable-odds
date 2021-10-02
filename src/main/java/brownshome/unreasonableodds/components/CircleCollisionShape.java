@@ -48,7 +48,7 @@ public record CircleCollisionShape(Vec2 position, double radius) implements Coll
 	}
 
 	@Override
-	public Point sweptCollision(CollisionShape shape, Vec2 sweep) {
+	public SweptCollision sweptCollision(CollisionShape shape, Vec2 sweep) {
 		return switch (shape) {
 			case CircleCollisionShape circle -> sweptCollision(circle, sweep);
 
@@ -60,7 +60,7 @@ public record CircleCollisionShape(Vec2 position, double radius) implements Coll
 		};
 	}
 
-	public Point sweptCollision(CircleCollisionShape circle, Vec2 sweep) {
+	public SweptCollision sweptCollision(CircleCollisionShape circle, Vec2 sweep) {
 		assert !doesCollideWith(circle);
 
 		// This forms a quadratic equation in t.
@@ -99,6 +99,6 @@ public record CircleCollisionShape(Vec2 position, double radius) implements Coll
 		relativePosition.scale(radius / combinedRadius);
 		relativePosition.add(position);
 
-		return new Point(relativePosition, normal);
+		return new SweptCollision(t, relativePosition, normal);
 	}
 }

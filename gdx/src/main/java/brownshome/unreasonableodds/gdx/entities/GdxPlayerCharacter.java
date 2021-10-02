@@ -3,7 +3,9 @@ package brownshome.unreasonableodds.gdx.entities;
 import java.time.Duration;
 
 import brownshome.unreasonableodds.Universe;
+import brownshome.unreasonableodds.entites.Character;
 import brownshome.unreasonableodds.gdx.*;
+import brownshome.vecmath.MVec2;
 import brownshome.vecmath.Vec2;
 
 import brownshome.unreasonableodds.Player;
@@ -12,6 +14,7 @@ import brownshome.unreasonableodds.entites.*;
 
 import brownshome.unreasonableodds.gdx.components.RenderComponent;
 import brownshome.unreasonableodds.gdx.components.Renderable;
+import com.badlogic.gdx.math.Affine2;
 
 public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 	private static final TextureRegionCache REGION_CACHE = new TextureRegionCache("character");
@@ -19,22 +22,29 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 
 	private final RenderComponent renderComponent;
 
-	protected GdxPlayerCharacter(Position position, Player player, Duration timeTravelEnergy, RenderComponent renderComponent) {
-		super(position, player, timeTravelEnergy);
+	protected GdxPlayerCharacter(Position position, Vec2 velocity, Player player, Duration timeTravelEnergy, RenderComponent renderComponent) {
+		super(position, velocity, player, timeTravelEnergy);
 
 		this.renderComponent = renderComponent;
 	}
 
-	public static GdxPlayerCharacter createCharacter(Position position, Player player, Duration timeTravelEnergy, ApplicationResources resources) {
-		return new GdxPlayerCharacter(position, player, timeTravelEnergy, new RenderComponent(resources,
+	public static GdxPlayerCharacter createCharacter(Position position, Vec2 velocity, Player player, Duration timeTravelEnergy, ApplicationResources resources) {
+		MVec2 renderPosition = position.position().copy();
+		renderPosition.add(-CHARACTER_RADIUS, -CHARACTER_RADIUS);
+
+		return new GdxPlayerCharacter(position, velocity, player, timeTravelEnergy, new RenderComponent(resources,
 				REGION_CACHE.getTextureRegion(resources.atlas()),
 				SIZE,
-				position));
+				new Position(renderPosition, position.orientation())));
+	}
+
+	public final RenderComponent renderComponent() {
+		return renderComponent;
 	}
 
 	@Override
-	public final RenderComponent renderComponent() {
-		return renderComponent;
+	public void render(Affine2 transform) {
+		renderComponent.render(transform);
 	}
 
 	@Override
@@ -44,22 +54,29 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 
 	@Override
 	protected PlayerCharacter withTimeTravelEnergy(Duration energy) {
-		return new GdxPlayerCharacter(position(), player(), energy, renderComponent);
+		return new GdxPlayerCharacter(position(), velocity(), player(), energy, renderComponent);
 	}
 
 	@Override
 	protected GdxPlayerCharacter withPosition(Position position) {
-		return new GdxPlayerCharacter(position, player(), timeTravelEnergy(), renderComponent.withPosition(position));
+		MVec2 renderPosition = position.position().copy();
+		renderPosition.add(-CHARACTER_RADIUS, -CHARACTER_RADIUS);
+
+		return new GdxPlayerCharacter(position,
+				velocity(),
+				player(),
+				timeTravelEnergy(),
+				renderComponent.withPosition(new Position(renderPosition, position.orientation())));
+	}
+
+	@Override
+	protected Character withVelocity(Vec2 velocity) {
+		return new GdxPlayerCharacter(position(), velocity, player(), timeTravelEnergy(), renderComponent);
 	}
 
 	@Override
 	protected HistoricalCharacter createHistoricalCharacter() {
-		return new GdxHistoricalCharacter(position(), renderComponent);
-	}
-
-	@Override
-	protected PlayerCharacter nextEntity(Universe.UniverseStep step) {
-		return super.nextEntity(step);
+		return new GdxHistoricalCharacter(position(), velocity(), renderComponent);
 	}
 
 	@Override

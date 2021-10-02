@@ -5,8 +5,8 @@ import java.time.Instant;
 import java.util.*;
 
 import brownshome.unreasonableodds.components.Position;
-import brownshome.unreasonableodds.entites.Entity;
-import brownshome.unreasonableodds.entites.PlayerCharacter;
+import brownshome.unreasonableodds.entites.*;
+import brownshome.unreasonableodds.entites.tile.Tile;
 import brownshome.vecmath.Rot2;
 import brownshome.vecmath.Vec2;
 
@@ -40,10 +40,22 @@ public class Rules {
 		return Duration.ZERO;
 	}
 
-	public Multiverse createMultiverse(Collection<Player> players, Random random) {
-		var initialPlayers = players.stream().<Entity>map(p -> createPlayerCharacter(createSpawnPosition(random), p, initialJumpEnergy())).toList();
+	public MainFloor createFloor() {
+		return new MainFloor(new Tile[] {
+				Tile.makeTile(Vec2.of(0.4, 0.4), Vec2.of(0.6, 0.6))
+		});
+	}
 
-		return createMultiverse(createUniverse(initialPlayers));
+	public Multiverse createMultiverse(Collection<Player> players, Random random) {
+		var initialEntities = new ArrayList<Entity>();
+
+		for (var player : players) {
+			initialEntities.add(createPlayerCharacter(createSpawnPosition(random), player, initialJumpEnergy()));
+		}
+
+		initialEntities.add(createFloor());
+
+		return createMultiverse(createUniverse(initialEntities));
 	}
 
 	protected Multiverse createMultiverse(Universe baseUniverse) {
@@ -73,7 +85,7 @@ public class Rules {
 	}
 
 	protected PlayerCharacter createPlayerCharacter(Position position, Player player, Duration timeTravelEnergy) {
-		return PlayerCharacter.createCharacter(position, player, timeTravelEnergy);
+		return PlayerCharacter.createCharacter(position, Vec2.ZERO, player, timeTravelEnergy);
 	}
 
 	protected Position createSpawnPosition(Random random) {

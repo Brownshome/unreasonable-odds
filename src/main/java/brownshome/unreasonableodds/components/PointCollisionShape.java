@@ -37,7 +37,7 @@ public record PointCollisionShape(Vec2 position) implements CollisionShape {
 	}
 
 	@Override
-	public Point sweptCollision(CollisionShape shape, Vec2 sweep) {
+	public SweptCollision sweptCollision(CollisionShape shape, Vec2 sweep) {
 		return switch (shape) {
 			case PointCollisionShape ignored -> null;
 			case CircleCollisionShape circle -> sweptCollision(circle, sweep);
@@ -51,7 +51,7 @@ public record PointCollisionShape(Vec2 position) implements CollisionShape {
 		};
 	}
 
-	public Point sweptCollision(CircleCollisionShape circle, Vec2 sweep) {
+	public SweptCollision sweptCollision(CircleCollisionShape circle, Vec2 sweep) {
 		assert !doesCollideWith(circle);
 
 		// This forms a quadratic equation in t.
@@ -86,10 +86,10 @@ public record PointCollisionShape(Vec2 position) implements CollisionShape {
 		normal.normalize();
 		relativePosition.add(position);
 
-		return new Point(relativePosition, normal);
+		return new SweptCollision(t, relativePosition, normal);
 	}
 
-	public Point sweptCollision(AABBCollisionShape aabb, Vec2 sweep) {
+	public SweptCollision sweptCollision(AABBCollisionShape aabb, Vec2 sweep) {
 		assert !doesCollideWith(aabb);
 
 		MVec2 scale = Vec2.of(1.0 / sweep.x(), 1.0 / sweep.y());
@@ -132,6 +132,6 @@ public record PointCollisionShape(Vec2 position) implements CollisionShape {
 		MVec2 point = position.copy();
 		point.scaleAdd(sweep, t);
 
-		return new Point(point, normal);
+		return new SweptCollision(t, point, normal);
 	}
 }

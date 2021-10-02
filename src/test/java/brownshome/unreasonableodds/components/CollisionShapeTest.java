@@ -8,9 +8,11 @@ import static org.junit.jupiter.api.Assertions.*;
 class CollisionShapeTest {
 	private static final double ACCURACY = 1e-6;
 
-	private static void assertCollisionPointEquals(CollisionShape.Point expected, CollisionShape.Point actual, double accuracy) {
-		assertEquals(expected.position().x(), actual.position().x(), accuracy);
-		assertEquals(expected.position().y(), actual.position().y(), accuracy);
+	private static void assertCollisionPointEquals(CollisionShape.SweptCollision expected, CollisionShape.SweptCollision actual, double accuracy) {
+		assertEquals(expected.contact().x(), actual.contact().x(), accuracy);
+		assertEquals(expected.contact().y(), actual.contact().y(), accuracy);
+
+		assertEquals(expected.sweep(), actual.sweep(), accuracy);
 
 		assertEquals(expected.normal().x(), actual.normal().x(), accuracy);
 		assertEquals(expected.normal().y(), actual.normal().y(), accuracy);
@@ -43,16 +45,16 @@ class CollisionShapeTest {
 	@Test
 	void circleCircleSweptCollisionAtStart() {
 		CollisionShape a = new CircleCollisionShape(Vec2.of(1.0, 0.0), 1.0);
-		CollisionShape.Point result;
+		CollisionShape.SweptCollision result;
 
 		result = a.sweptCollision(new CircleCollisionShape(Vec2.of(1.0, -2.0), 1.0), Vec2.of(0.0, 1.0));
-		assertCollisionPointEquals(new CollisionShape.Point(Vec2.of(1.0, -1.0), Vec2.of(0.0, -1.0)), result, ACCURACY);
+		assertCollisionPointEquals(new CollisionShape.SweptCollision(0.0, Vec2.of(1.0, -1.0), Vec2.of(0.0, -1.0)), result, ACCURACY);
 	}
 
 	@Test
 	void circleCircleSweptNoCollisionAway() {
 		CollisionShape a = new CircleCollisionShape(Vec2.of(1.0, 0.0), 1.0);
-		CollisionShape.Point result;
+		CollisionShape.SweptCollision result;
 
 		result = a.sweptCollision(new CircleCollisionShape(Vec2.of(2.0, -2.0), 1.0), Vec2.of(0.0, -1.0));
 		assertNull(result);
@@ -61,7 +63,7 @@ class CollisionShapeTest {
 	@Test
 	void circleCircleSweptNoCollision() {
 		CollisionShape a = new CircleCollisionShape(Vec2.of(1.0, 0.0), 1.0);
-		CollisionShape.Point result;
+		CollisionShape.SweptCollision result;
 
 		result = a.sweptCollision(new CircleCollisionShape(Vec2.of(2.0, -2.0), 1.0), Vec2.of(1.0, 0.0));
 		assertNull(result);
