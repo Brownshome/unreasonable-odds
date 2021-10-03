@@ -3,7 +3,7 @@ package brownshome.unreasonableodds.components;
 import brownshome.vecmath.MVec2;
 import brownshome.vecmath.Vec2;
 
-public interface CollisionShape {
+public interface CollisionShape extends Collidable {
 	/**
 	 * Gets the lesser extent of the AABB of this object
 	 * @return the exclusive lesser edge of the AABB
@@ -18,7 +18,7 @@ public interface CollisionShape {
 
 	/**
 	 * Queries if this object collides with the given object. Two objects are considered to have collided if there
-	 * is a definite overlap. Two touching objects are not considered to collide.
+	 * is a definite overlap. Two touching objects are not considered colliding.
 	 *
 	 * @param shape the shape to query
 	 * @return true if they do collide, false if they do not.
@@ -54,5 +54,10 @@ public interface CollisionShape {
 		var result = shape.sweptCollision(this, reverse);
 
 		return result == null ? null : result.reverse();
+	}
+
+	@Override
+	default CollisionShape collisionShape() {
+		return this;
 	}
 }

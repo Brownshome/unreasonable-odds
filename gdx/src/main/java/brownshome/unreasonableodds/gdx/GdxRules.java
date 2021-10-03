@@ -6,9 +6,9 @@ import java.util.Random;
 
 import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.components.Position;
-import brownshome.unreasonableodds.entites.tile.Tile;
-import brownshome.unreasonableodds.gdx.entities.GdxMainFloor;
+import brownshome.unreasonableodds.entites.StaticMap;
 import brownshome.unreasonableodds.gdx.entities.GdxPlayerCharacter;
+import brownshome.unreasonableodds.gdx.tile.GdxClosedTile;
 import brownshome.vecmath.Rot2;
 import brownshome.vecmath.Vec2;
 
@@ -40,9 +40,9 @@ public final class GdxRules extends Rules {
 	}
 
 	@Override
-	public GdxMainFloor createFloor() {
-		return GdxMainFloor.createMainFloor(new Tile[] {
-				Tile.makeTile(Vec2.of(0.4, 0.4), Vec2.of(0.6, 0.6))
-		}, resources);
+	public StaticMap generateStaticMap() {
+		return StaticMap.createStaticMap(List.of(
+				GdxClosedTile.createTile(Vec2.of(0.4, 0.4), Vec2.of(0.6, 0.6), resources)
+		));
 	}
 }

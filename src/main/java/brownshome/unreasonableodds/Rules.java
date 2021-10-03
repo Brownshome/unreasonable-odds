@@ -6,7 +6,7 @@ import java.util.*;
 
 import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.entites.*;
-import brownshome.unreasonableodds.entites.tile.Tile;
+import brownshome.unreasonableodds.tile.ClosedTile;
 import brownshome.vecmath.Rot2;
 import brownshome.vecmath.Vec2;
 
@@ -40,10 +40,10 @@ public class Rules {
 		return Duration.ZERO;
 	}
 
-	public MainFloor createFloor() {
-		return new MainFloor(new Tile[] {
-				Tile.makeTile(Vec2.of(0.4, 0.4), Vec2.of(0.6, 0.6))
-		});
+	public StaticMap generateStaticMap() {
+		return StaticMap.createStaticMap(List.of(
+				ClosedTile.createTile(Vec2.of(0.4, 0.4), Vec2.of(0.6, 0.6))
+		));
 	}
 
 	public Multiverse createMultiverse(Collection<Player> players, Random random) {
@@ -53,7 +53,7 @@ public class Rules {
 			initialEntities.add(createPlayerCharacter(createSpawnPosition(random), player, initialJumpEnergy()));
 		}
 
-		initialEntities.add(createFloor());
+		initialEntities.add(generateStaticMap());
 
 		return createMultiverse(createUniverse(initialEntities));
 	}
