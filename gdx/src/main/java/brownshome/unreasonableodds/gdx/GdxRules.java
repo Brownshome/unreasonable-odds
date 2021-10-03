@@ -1,12 +1,14 @@
 package brownshome.unreasonableodds.gdx;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.List;
+import java.util.Random;
 
 import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.components.Position;
-import brownshome.unreasonableodds.entites.PlayerCharacter;
+import brownshome.unreasonableodds.entites.StaticMap;
 import brownshome.unreasonableodds.gdx.entities.GdxPlayerCharacter;
+import brownshome.unreasonableodds.gdx.tile.GdxClosedTile;
 import brownshome.vecmath.Rot2;
 import brownshome.vecmath.Vec2;
 
@@ -19,7 +21,7 @@ public final class GdxRules extends Rules {
 
 	@Override
 	public GdxPlayerCharacter createPlayerCharacter(Position position, Player player, Duration timeTravelEnergy) {
-		return GdxPlayerCharacter.createCharacter(position, player, timeTravelEnergy, resources);
+		return GdxPlayerCharacter.createCharacter(position, Vec2.ZERO, player, timeTravelEnergy, resources);
 	}
 
 	@Override
@@ -35,5 +37,12 @@ public final class GdxRules extends Rules {
 	@Override
 	protected Position createSpawnPosition(Random random) {
 		return new Position(Vec2.ZERO, Rot2.IDENTITY);
+	}
+
+	@Override
+	public StaticMap generateStaticMap() {
+		return StaticMap.createStaticMap(List.of(
+				GdxClosedTile.createTile(Vec2.of(0.4, 0.4), Vec2.of(0.6, 0.6), resources)
+		));
 	}
 }

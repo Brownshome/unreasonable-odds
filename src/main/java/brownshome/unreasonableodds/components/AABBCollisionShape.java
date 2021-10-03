@@ -45,4 +45,107 @@ public record AABBCollisionShape(Vec2 lesserExtent, Vec2 greaterExtent) implemen
 		// test that point against the circle
 		return proj.distanceSq(circle.position()) < circle.radius() * circle.radius();
 	}
+
+	@Override
+	public SweptCollision sweptCollision(CollisionShape shape, Vec2 sweep) {
+		return switch (shape) {
+			case AABBCollisionShape aabb -> sweptCollision(aabb, sweep);
+			case PointCollisionShape point -> sweptCollision(point, sweep);
+			default -> CollisionShape.super.sweptCollision(shape, sweep);
+		};
+	}
+
+	public SweptCollision sweptCollision(AABBCollisionShape aabb, Vec2 sweep) {
+		assert !doesCollideWith(aabb);
+
+		MVec2 scale = Vec2.of(1.0 / sweep.x(), 1.0 / sweep.y());
+
+		MVec2 positiveDistance = lesserExtent.copy();
+		positiveDistance.subtract(aabb.greaterExtent);
+		positiveDistance.scale(scale);
+
+		MVec2 negativeDistance = greaterExtent.copy();
+		negativeDistance.subtract(aabb.lesserExtent);
+		negativeDistance.scale(scale);
+
+		double tx = Math.min(positiveDistance.x(), negativeDistance.x());
+		if (tx >= 1.0 || Double.isNaN(tx)) {
+			return null;
+		}
+
+		double ty = Math.min(positiveDistance.y(), negativeDistance.y());
+		if (ty >= 1.0 || Double.isNaN(ty)) {
+			return null;
+		}
+
+		double t;
+		Vec2 normal;
+		if (tx > ty) {
+			t = tx;
+
+			if (sweep.x() > 0.0) {
+				normal = Vec2.of(-1.0, 0.0);
+			} else {
+				normal = Vec2.of(1.0, 0.0);
+			}
+		} else {
+			t = ty;
+
+			if (sweep.y() > 0.0) {
+				normal = Vec2.of(0.0, -1.0);
+			} else {
+				normal = Vec2.of(0.0, 1.0);
+			}
+		}
+
+		if (t < 0.0 || t >= positiveDistance.x() && t >= negativeDistance.x() || t >= positiveDistance.y() && t >= negativeDistance.y()) {
+			// We have will miss the AABB, the ranges of collision on each axis don't overlap
+			return null;
+		}
+
+		return new SweptCollision(t, normal);
+	}
+
+	public SweptCollision sweptCollision(PointCollisionShape point, Vec2 sweep) {
+		assert !doesCollideWith(point);
+
+		MVec2 scale = Vec2.of(1.0 / sweep.x(), 1.0 / sweep.y());
+
+		MVec2 positiveDistance = lesserExtent.copy();
+		positiveDistance.subtract(point.position());
+		positiveDistance.scale(scale);
+
+		MVec2 negativeDistance = greaterExtent.copy();
+		negativeDistance.subtract(point.position());
+		negativeDistance.scale(scale);
+
+		double tx = Math.min(positiveDistance.x(), negativeDistance.x());
+		if (tx >= 1.0 || Double.isNaN(tx)) {
+			return null;
+		}
+
+		double ty = Math.min(positiveDistance.y(), negativeDistance.y());
+		if (ty >= 1.0 || Double.isNaN(ty)) {
+			return null;
+		}
+
+		double t;
+		Vec2 normal;
+		if (tx > ty) {
+			t = tx;
+			assert sweep.x() != 0.0;
+			normal = Vec2.of(-Math.signum(sweep.x()), 0.0);
+		} else {
+			t = ty;
+			assert sweep.y() != 0.0;
+			normal = Vec2.of(0.0, -Math.signum(sweep.y()));
+		}
+
+		if (t < 0.0 || t >= positiveDistance.x() && t >= negativeDistance.x() || t >= positiveDistance.y() && t >= negativeDistance.y()) {
+			// We missed, the ranges of collision on each axis don't overlap
+			return null;
+		}
+
+		return new SweptCollision(t, normal);
+	}
 }

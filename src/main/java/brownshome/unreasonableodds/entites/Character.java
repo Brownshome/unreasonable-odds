@@ -4,8 +4,10 @@ import java.time.Duration;
 import java.time.Instant;
 
 import brownshome.unreasonableodds.*;
+import brownshome.unreasonableodds.collision.CollisionDetector;
 import brownshome.unreasonableodds.components.CollisionShape;
 import brownshome.unreasonableodds.components.*;
+import brownshome.vecmath.MVec2;
 import brownshome.vecmath.Vec2;
 
 /**
@@ -15,9 +17,12 @@ public abstract class Character extends Entity implements Positioned, Collidable
 	/**
 	 * The radius of the collision shape for character objects
 	 */
-	protected static final double CHARACTER_RADIUS = 0.1;
+	protected static final double CHARACTER_RADIUS = 0.05;
+	protected static final double CHARACTER_ACCELERATION = 5.0;
+	protected static final double CHARACTER_MAX_SPEED = 0.5;
 
 	private final Position position;
+	private final Vec2 velocity;
 	private final CollisionShape collisionShape;
 
 	/**
@@ -25,17 +30,22 @@ public abstract class Character extends Entity implements Positioned, Collidable
 	 * @param position the position of this character
 	 * @param collisionShape the collision shape to use
 	 */
-	protected Character(Position position, CollisionShape collisionShape) {
+	protected Character(Position position, Vec2 velocity, CollisionShape collisionShape) {
 		this.position = position;
 		this.collisionShape = collisionShape;
+		this.velocity = velocity;
 	}
 
 	/**
 	 * Creates a character with the default circle collision shape
 	 * @param position the position of this character
 	 */
-	protected Character(Position position) {
-		this(position, new CircleCollisionShape(position.position(), CHARACTER_RADIUS));
+	protected Character(Position position, Vec2 velocity) {
+		this(position, velocity, makeCollisionShape(position));
+	}
+
+	private static CollisionShape makeCollisionShape(Position position) {
+		return new CircleCollisionShape(position.position(), CHARACTER_RADIUS);
 	}
 
 	/**
@@ -44,6 +54,10 @@ public abstract class Character extends Entity implements Positioned, Collidable
 	 */
 	public final Position position() {
 		return position;
+	}
+
+	public final Vec2 velocity() {
+		return velocity;
 	}
 
 	@Override
@@ -95,20 +109,36 @@ public abstract class Character extends Entity implements Positioned, Collidable
 		 */
 		public final void finaliseMove(Vec2 movementDirection) {
 			double l = movementDirection.lengthSq();
-			if (l == 0) {
-				setNext(Character.this);
-			} else {
-				if (l > 1.0) {
-					var tmp = movementDirection.copy();
+
+			if (l > 1.0) {
+				var tmp = movementDirection.copy();
+				tmp.normalize();
+				movementDirection = tmp;
+			} else if (l == 0.0) {
+				double v = velocity.lengthSq();
+
+				double thisFrameDeltaV = CHARACTER_ACCELERATION * step.seconds();
+				if (v <= thisFrameDeltaV * thisFrameDeltaV) {
+					setNext(withVelocity(Vec2.ZERO));
+					return;
+				} else {
+					var tmp = velocity.copy();
 					tmp.normalize();
+					tmp.scale(-1.0);
 					movementDirection = tmp;
 				}
-
-				var newPosition = position.position().copy();
-				newPosition.scaleAdd(movementDirection, step.seconds());
-
-				setNext(withPosition(new Position(newPosition, position.orientation())));
 			}
+
+			var newVelocity = velocity.copy();
+			newVelocity.scaleAdd(movementDirection, step.seconds() * CHARACTER_ACCELERATION);
+			double lengthSquared = newVelocity.lengthSq();
+
+			// Limit max speed
+			if (lengthSquared > CHARACTER_MAX_SPEED * CHARACTER_MAX_SPEED) {
+				newVelocity.scale(CHARACTER_MAX_SPEED / Math.sqrt(lengthSquared));
+			}
+
+			setNext(withVelocity(newVelocity));
 		}
 
 		/**
@@ -160,6 +190,53 @@ public abstract class Character extends Entity implements Positioned, Collidable
 		}
 	}
 
+	protected Actions createActions(Universe.UniverseStep step) {
+		return new Actions(step);
+	}
+
+	@Override
+	protected Entity nextEntity(Universe.UniverseStep step) {
+		var preMoveEntity = createActions(step).next();
+
+		if (preMoveEntity == null) {
+			return null;
+		}
+
+		MVec2 move = preMoveEntity.velocity.copy();
+		move.scale(step.seconds());
+
+		MVec2 velocity = preMoveEntity.velocity.copy();
+
+		// Project away components for each object we hit
+		while (move.lengthSq() != 0.0) {
+			var callback = new CollisionDetector.SweptCollisionCallback() {
+				CollisionShape.SweptCollision firstCollision = null;
+
+				@Override
+				public void call(CollisionShape.SweptCollision sweptCollision, Collidable collidable) {
+					if (firstCollision == null || firstCollision.sweep() < sweptCollision.sweep()) {
+						firstCollision = sweptCollision;
+					}
+				}
+			};
+
+			step.universe().collisionDetector().forEachCollidingShapeSwept(collisionShape, move, callback);
+
+			if (callback.firstCollision == null) {
+				break;
+			}
+
+			var normal = callback.firstCollision.normal();
+			velocity.scaleAdd(normal, -normal.dot(velocity));
+
+			move.set(velocity);
+			move.scale(step.seconds());
+		}
+
+		move.add(preMoveEntity.position.position());
+		return preMoveEntity.withPosition(new Position(move, preMoveEntity.position.orientation())).withVelocity(velocity);
+	}
+
 	/**
 	 * Creates a jump scar at the given position and with the given duration remaining
 	 * @param position the position to create the jump scar
@@ -171,16 +248,11 @@ public abstract class Character extends Entity implements Positioned, Collidable
 	}
 
 	/**
-	 * Creates a new character identical to this one, but with a given position
-	 * @param position the position
+	 * Creates a new character identical to this one, but with a given velocity
+	 * @param velocity the velocity
 	 * @return a new character
 	 */
+	protected abstract Character withVelocity(Vec2 velocity);
+
 	protected abstract Character withPosition(Position position);
-
-	@Override
-	public void addToBuilder(Universe.Builder builder) {
-		builder.addCollision(this);
-
-		super.addToBuilder(builder);
-	}
 }
