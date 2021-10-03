@@ -11,10 +11,6 @@ import static brownshome.unreasonableodds.math.VectorUtils.cross;
  * @param radius the radius of the circle
  */
 public record CircleCollisionShape(Vec2 position, double radius) implements CollisionShape {
-	public CircleCollisionShape {
-		assert radius > 0;
-	}
-
 	@Override
 	public Vec2 lesserExtent() {
 		MVec2 extent = position.copy();
@@ -51,12 +47,8 @@ public record CircleCollisionShape(Vec2 position, double radius) implements Coll
 	public SweptCollision sweptCollision(CollisionShape shape, Vec2 sweep) {
 		return switch (shape) {
 			case CircleCollisionShape circle -> sweptCollision(circle, sweep);
-
-			default -> {
-				MVec2 reverse = sweep.copy();
-				reverse.negate();
-				yield shape.sweptCollision(this, reverse).reverse();
-			}
+			case AABBCollisionShape aabb -> sweptCollision(aabb, sweep);
+			default -> CollisionShape.super.sweptCollision(shape, sweep);
 		};
 	}
 
@@ -66,7 +58,6 @@ public record CircleCollisionShape(Vec2 position, double radius) implements Coll
 		// This forms a quadratic equation in t.
 		double sweepLength = sweep.lengthSq();
 		double combinedRadius = radius + circle.radius;
-		assert combinedRadius != 0;
 
 		assert sweepLength != 0;
 
@@ -96,9 +87,63 @@ public record CircleCollisionShape(Vec2 position, double radius) implements Coll
 		relativePosition.scaleAdd(sweep, t);
 		MVec2 normal = relativePosition.copy();
 		normal.normalize();
-		relativePosition.scale(radius / combinedRadius);
-		relativePosition.add(position);
 
-		return new SweptCollision(t, relativePosition, normal);
+		return new SweptCollision(t, normal);
+	}
+
+	public SweptCollision sweptCollision(AABBCollisionShape aabb, Vec2 sweep) {
+		// Pretty inefficient collision determination. But the broad-phase should deal with most of the stuff
+		SweptCollision bestCollision, subCollision;
+		var point = new PointCollisionShape(position);
+
+		// Collide against the two interior AABB objects
+		bestCollision = point.sweptCollision(new AABBCollisionShape(
+				Vec2.of(aabb.lesserExtent().x() - radius, aabb.lesserExtent().y()),
+				Vec2.of(aabb.greaterExtent().x() + radius, aabb.greaterExtent().y())
+		), sweep);
+
+		subCollision = point.sweptCollision(new AABBCollisionShape(
+				Vec2.of(aabb.lesserExtent().x(), aabb.lesserExtent().y() - radius),
+				Vec2.of(aabb.greaterExtent().x(), aabb.greaterExtent().y() + radius)
+		), sweep);
+
+		if (bestCollision == null || subCollision != null && subCollision.sweep() < bestCollision.sweep()) {
+			bestCollision = subCollision;
+		}
+
+		// Collide against the four corner circles
+		subCollision = point.sweptCollision(new CircleCollisionShape(
+				Vec2.of(aabb.lesserExtent().x(), aabb.lesserExtent().y()), radius
+		), sweep);
+
+		if (bestCollision == null || subCollision != null && subCollision.sweep() < bestCollision.sweep()) {
+			bestCollision = subCollision;
+		}
+
+		subCollision = point.sweptCollision(new CircleCollisionShape(
+				Vec2.of(aabb.greaterExtent().x(), aabb.lesserExtent().y()), radius
+		), sweep);
+
+		if (bestCollision == null || subCollision != null && subCollision.sweep() < bestCollision.sweep()) {
+			bestCollision = subCollision;
+		}
+
+		subCollision = point.sweptCollision(new CircleCollisionShape(
+				Vec2.of(aabb.lesserExtent().x(), aabb.greaterExtent().y()), radius
+		), sweep);
+
+		if (bestCollision == null || subCollision != null && subCollision.sweep() < bestCollision.sweep()) {
+			bestCollision = subCollision;
+		}
+
+		subCollision = point.sweptCollision(new CircleCollisionShape(
+				Vec2.of(aabb.greaterExtent().x(), aabb.greaterExtent().y()), radius
+		), sweep);
+
+		if (bestCollision == null || subCollision != null && subCollision.sweep() < bestCollision.sweep()) {
+			bestCollision = subCollision;
+		}
+
+		return bestCollision;
 	}
 }

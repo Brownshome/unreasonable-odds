@@ -45,12 +45,7 @@ public abstract class Character extends Entity implements Positioned, Collidable
 	}
 
 	private static CollisionShape makeCollisionShape(Position position) {
-		var lesser = position.position().copy();
-		lesser.add(-CHARACTER_RADIUS, -CHARACTER_RADIUS);
-		var greater = position.position().copy();
-		greater.add(CHARACTER_RADIUS, CHARACTER_RADIUS);
-
-		return new AABBCollisionShape(lesser, greater);
+		return new CircleCollisionShape(position.position(), CHARACTER_RADIUS);
 	}
 
 	/**

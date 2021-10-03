@@ -23,20 +23,21 @@ public interface CollisionShape {
 	 * @param shape the shape to query
 	 * @return true if they do collide, false if they do not.
 	 */
-	boolean doesCollideWith(CollisionShape shape);
+	default boolean doesCollideWith(CollisionShape shape) {
+		return shape.doesCollideWith(this);
+	}
 
 	/**
 	 * The result of a swept collision.
 	 *
 	 * @param sweep the portion of the sweep ray that was swept along
-	 * @param contact the contact point
 	 * @param normal the normal of the surface of the collided object
 	 */
-	record SweptCollision(double sweep, Vec2 contact, Vec2 normal) {
+	record SweptCollision(double sweep, Vec2 normal) {
 		public SweptCollision reverse() {
 			MVec2 reversed = normal.copy();
 			reversed.negate();
-			return new SweptCollision(sweep, contact, normal);
+			return new SweptCollision(sweep, normal);
 		}
 	}
 
@@ -47,5 +48,11 @@ public interface CollisionShape {
 	 * @param sweep the vector over which the sweep occurs
 	 * @return a collision point, or null if no collision occurred over the course of the sweep
 	 */
-	SweptCollision sweptCollision(CollisionShape shape, Vec2 sweep);
+	default SweptCollision sweptCollision(CollisionShape shape, Vec2 sweep) {
+		MVec2 reverse = sweep.copy();
+		reverse.negate();
+		var result = shape.sweptCollision(this, reverse);
+
+		return result == null ? null : result.reverse();
+	}
 }
