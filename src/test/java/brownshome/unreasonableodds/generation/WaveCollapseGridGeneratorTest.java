@@ -49,16 +49,16 @@ class WaveCollapseGridGeneratorTest {
 
 		generator.get(0, 0).collapse(CONSTANT_RANDOM);
 
-		for (int r = 0; r < 16; r++) for (int c = 0; c < 16; c++) {
-			var cell = generator.get(r, c);
+		for (int y = 0; y < 16; y++) for (int x = 0; x < 16; x++) {
+			var cell = generator.get(x, y);
 			assertEquals(1, cell.numberOfPossibleTypes());
 			assertEquals(0.0, cell.entropy(), ENTROPY_ACCURACY);
 
-			if (r != 0 || c != 0) {
+			if (y != 0 || x != 0) {
 				cell.collapse(CONSTANT_RANDOM);
 			}
 
-			assertEquals(areas[2 * (r % 2) + c % 2], cell.observed());
+			assertEquals(areas[2 * (y % 2) + x % 2], cell.observed());
 		}
 	}
 

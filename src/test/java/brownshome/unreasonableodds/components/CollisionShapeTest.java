@@ -9,9 +9,6 @@ class CollisionShapeTest {
 	private static final double ACCURACY = 1e-6;
 
 	private static void assertCollisionPointEquals(CollisionShape.SweptCollision expected, CollisionShape.SweptCollision actual, double accuracy) {
-		assertEquals(expected.contact().x(), actual.contact().x(), accuracy);
-		assertEquals(expected.contact().y(), actual.contact().y(), accuracy);
-
 		assertEquals(expected.sweep(), actual.sweep(), accuracy);
 
 		assertEquals(expected.normal().x(), actual.normal().x(), accuracy);
@@ -48,7 +45,7 @@ class CollisionShapeTest {
 		CollisionShape.SweptCollision result;
 
 		result = a.sweptCollision(new CircleCollisionShape(Vec2.of(1.0, -2.0), 1.0), Vec2.of(0.0, 1.0));
-		assertCollisionPointEquals(new CollisionShape.SweptCollision(0.0, Vec2.of(1.0, -1.0), Vec2.of(0.0, -1.0)), result, ACCURACY);
+		assertCollisionPointEquals(new CollisionShape.SweptCollision(0.0, Vec2.of(0.0, -1.0)), result, ACCURACY);
 	}
 
 	@Test

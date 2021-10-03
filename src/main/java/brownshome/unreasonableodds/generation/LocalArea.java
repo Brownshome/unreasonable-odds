@@ -58,7 +58,7 @@ public class LocalArea {
 		return individualEntropy;
 	}
 
-	final int index() {
+	public final int index() {
 		return index;
 	}
 

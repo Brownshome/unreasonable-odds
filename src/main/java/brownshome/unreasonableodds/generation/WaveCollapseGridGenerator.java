@@ -2,6 +2,7 @@ package brownshome.unreasonableodds.generation;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Generates any grid-based pattern with discrete numbers of values in each cell
@@ -10,7 +11,7 @@ import java.util.stream.Collectors;
  * Inspired by https://github.com/mxgmn/WaveFunctionCollapse
  */
 public final class WaveCollapseGridGenerator {
-	private final int rows, columns;
+	private final int width, height;
 
 	private final LocalArea[] areas;
 	private final EnumMap<Direction, int[]> startingTypeAgreement;
@@ -53,12 +54,17 @@ public final class WaveCollapseGridGenerator {
 		}
 
 		public void collapse(Random random) {
+			collapse(observeType(random));
+		}
+
+		public void collapse(LocalArea area) {
+			assert possibleTypes.get(area.index());
 			assert observed == null;
 
-			observed = observeType(random);
+			observed = area;
 
 			for (int i = possibleTypes.nextSetBit(0); i >= 0; i = possibleTypes.nextSetBit(i + 1)) {
-				if (areas[i] != observed) {
+				if (areas[i] != area) {
 					setNotPossible(areas[i]);
 				}
 			}
@@ -84,18 +90,16 @@ public final class WaveCollapseGridGenerator {
 
 					if (cell.numberOfPossibleTypes == 0) {
 						throw new GenerationContradictionException(cell.x, cell.y);
-					} else if (cell.numberOfPossibleTypes == 1) {
-						// cell.observed = areas[cell.possibleTypes.length() - 1];
 					}
 
 					for (var d : Direction.values()) {
 						int nx = cell.x + d.x, ny = cell.y + d.y;
-						if (nx < 0 || nx >= columns || ny < 0 || ny >= rows) {
+						if (nx < 0 || nx >= height || ny < 0 || ny >= width) {
 							// No need to propagate out of the border of the world
 							continue;
 						}
 
-						var neighbour = get(cell.y + d.y, cell.x + d.x);
+						var neighbour = get(cell.x + d.x, cell.y + d.y);
 						var compatibleRegions = area.compatibility(d);
 
 						for (int i = compatibleRegions.nextSetBit(0); i >= 0; i = compatibleRegions.nextSetBit(i + 1)) {
@@ -144,6 +148,10 @@ public final class WaveCollapseGridGenerator {
 			return y;
 		}
 
+		public Stream<LocalArea> possibleTypes() {
+			return possibleTypes.stream().mapToObj(i -> areas[i]);
+		}
+
 		@Override
 		public String toString() {
 			if (observed != null) {
@@ -157,9 +165,9 @@ public final class WaveCollapseGridGenerator {
 	private final double sumProbability, sumEntropy;
 	private final Cell[][] cells;
 
-	public WaveCollapseGridGenerator(int rows, int columns, LocalArea[] areas) {
-		this.rows = rows;
-		this.columns = columns;
+	public WaveCollapseGridGenerator(int width, int height, LocalArea[] areas) {
+		this.width = width;
+		this.height = height;
 
 		this.areas = areas;
 
@@ -183,14 +191,14 @@ public final class WaveCollapseGridGenerator {
 		sumProbability = localSumProbability;
 		sumEntropy = localSumEntropy;
 
-		this.cells = new Cell[rows][columns];
-		for (int r = 0; r < rows; r++) for (int c = 0; c < columns; c++) {
-			cells[r][c] = new Cell(c, r);
+		this.cells = new Cell[height][width];
+		for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
+			cells[y][x] = new Cell(x, y);
 		}
 	}
 
-	public Cell get(int row, int col) {
-		return cells[row][col];
+	public Cell get(int x, int y) {
+		return cells[y][x];
 	}
 
 	public Cell selectNextCell(Random random) {
@@ -198,8 +206,8 @@ public final class WaveCollapseGridGenerator {
 
 		double entropy = Double.POSITIVE_INFINITY;
 		Cell result = null;
-		for (int r = 0; r < rows; r++) for (int c = 0; c < columns; c++) {
-			var cell = get(r, c);
+		for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
+			var cell = get(x, y);
 
 			if (cell.observed != null) {
 				continue;
