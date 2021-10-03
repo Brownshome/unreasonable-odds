@@ -28,68 +28,69 @@ public final class CollisionDetector {
 		return new CollisionDetector(0, new BitSet[0][0], Collections.emptyList());
 	}
 
-	public static CollisionDetector createDetector(List<Collidable> shapes) {
-		int gridSize = DEFAULT_GRID_SIZE;
-
-		BitSet[][] grid = new BitSet[gridSize][gridSize];
-
-		MVec2 min = Vec2.of(0, 0);
-		MVec2 max = Vec2.of(0, 0);
-
-		for (int i = 0; i < shapes.size(); i++) {
-			CollisionShape shape = shapes.get(i).collisionShape();
-
-			min.set(shape.lesserExtent());
-			max.set(shape.greaterExtent());
-
-			min.scale(gridSize);
-			max.scale(gridSize);
-
-			int minX = Math.max((int) min.x(), 0);
-			int minY = Math.max((int) min.y(), 0);
-
-			int maxX = Math.min((int) Math.ceil(max.x()), gridSize - 1);
-			int maxY = Math.min((int) Math.ceil(max.y()), gridSize - 1);
-
-			for (int x = minX; x < maxX; x++) {
-				for (int y = minY; y < maxY; y++) {
-					if (grid[x][y] == null) {
-						grid[x][y] = new BitSet();
-					}
-
-					grid[x][y].set(i);
-				}
-			}
-		}
-
-		return new CollisionDetector(gridSize, grid, shapes);
+	@FunctionalInterface
+	private interface CoordinateConsumer {
+		void apply(int x, int y);
 	}
 
-	private void forEachSquareInRange(Vec2 min, Vec2 max, Consumer<Collidable> consumer) {
+	private static void forAllCoords(Vec2 min, Vec2 max, int gridSize, CoordinateConsumer consumer) {
 		MVec2 scaledMin = min.copy();
 		MVec2 scaledMax = max.copy();
 
 		scaledMin.scale(gridSize);
 		scaledMax.scale(gridSize);
 
-		int minX = Math.max((int) scaledMin.x(), 0);
-		int minY = Math.max((int) scaledMin.y(), 0);
+		int minX = (int) scaledMin.x();
+		int minY = (int) scaledMin.y();
 
-		int maxX = Math.min((int) Math.ceil(scaledMax.x()), gridSize - 1);
-		int maxY = Math.min((int) Math.ceil(scaledMax.y()), gridSize - 1);
+		int maxX = (int) Math.ceil(scaledMax.x());
+		int maxY = (int) Math.ceil(scaledMax.y());
 
-		BitSet combinedSet = new BitSet();
+		minX = Math.min(Math.max(0, minX), gridSize - 1);
+		minY = Math.min(Math.max(0, minY), gridSize - 1);
+
+		maxX = Math.min(Math.max(1, maxX), gridSize);
+		maxY = Math.min(Math.max(1, maxY), gridSize);
+
 		for (int x = minX; x < maxX; x++) {
 			for (int y = minY; y < maxY; y++) {
-				var set = grid[x][y];
-
-				if (set == null) {
-					continue;
-				}
-
-				combinedSet.or(set);
+				consumer.apply(x, y);
 			}
 		}
+	}
+
+	public static CollisionDetector createDetector(List<Collidable> shapes) {
+		int gridSize = DEFAULT_GRID_SIZE;
+
+		BitSet[][] grid = new BitSet[gridSize][gridSize];
+		for (int i = 0; i < shapes.size(); i++) {
+			CollisionShape shape = shapes.get(i).collisionShape();
+			int finalI = i;
+
+			forAllCoords(shape.lesserExtent(), shape.greaterExtent(), gridSize, (x, y) -> {
+				if (grid[x][y] == null) {
+					grid[x][y] = new BitSet();
+				}
+
+				grid[x][y].set(finalI);
+			});
+		}
+
+		return new CollisionDetector(gridSize, grid, shapes);
+	}
+
+	private void forEachSquareInRange(Vec2 min, Vec2 max, Consumer<Collidable> consumer) {
+		BitSet combinedSet = new BitSet();
+
+		forAllCoords(min, max, gridSize, (x, y) -> {
+			var set = grid[x][y];
+
+			if (set == null) {
+				return;
+			}
+
+			combinedSet.or(set);
+		});
 
 		for (int index = combinedSet.nextSetBit(0); index != -1; index = combinedSet.nextSetBit(index + 1)) {
 			consumer.accept(shapes.get(index));

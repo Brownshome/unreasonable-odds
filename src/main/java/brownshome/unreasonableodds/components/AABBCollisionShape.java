@@ -92,7 +92,6 @@ public record AABBCollisionShape(Vec2 lesserExtent, Vec2 greaterExtent) implemen
 		Vec2 point;
 		if (tx > ty) {
 			t = tx;
-			assert sweep.x() != 0.0;
 
 			if (sweep.x() > 0.0) {
 				normal = Vec2.of(-1.0, 0.0);
@@ -103,7 +102,6 @@ public record AABBCollisionShape(Vec2 lesserExtent, Vec2 greaterExtent) implemen
 			}
 		} else {
 			t = ty;
-			assert sweep.y() != 0.0;
 
 			if (sweep.y() > 0.0) {
 				normal = Vec2.of(0.0, -1.0);
