@@ -14,7 +14,6 @@ public final class WaveCollapseGridGenerator {
 	private final int width, height;
 
 	private final LocalArea[] areas;
-	private final EnumMap<Direction, int[]> startingTypeAgreement;
 
 	public final class Cell {
 		private final int x, y;
@@ -46,7 +45,27 @@ public final class WaveCollapseGridGenerator {
 		}
 
 		private int[] typeAgreement(Direction d) {
-			return typeAgreement.computeIfAbsent(d, (direction) -> startingTypeAgreement.get(direction).clone());
+			return typeAgreement.computeIfAbsent(d, (direction) -> {
+				int nx = x + direction.x, ny = y + direction.y;
+				var cell = get(nx, ny);
+
+				int[] agreement = new int[areas.length];
+				for (int i = cell.possibleTypes.nextSetBit(0); i >= 0; i = cell.possibleTypes.nextSetBit(i + 1)) {
+					var compatibility = areas[i].compatibility(direction.opposite());
+					for (int j = compatibility.nextSetBit(0); j >= 0; j = compatibility.nextSetBit(j + 1)) {
+						agreement[j]++;
+					}
+				}
+
+				// Flag any not possible types
+				for (int i = 0; i < agreement.length; i++) {
+					if (agreement[i] == 0) {
+						stack.add(new StackItem(this, areas[i]));
+					}
+				}
+
+				return agreement;
+			});
 		}
 
 		public double entropy() {
@@ -65,58 +84,26 @@ public final class WaveCollapseGridGenerator {
 
 			for (int i = possibleTypes.nextSetBit(0); i >= 0; i = possibleTypes.nextSetBit(i + 1)) {
 				if (areas[i] != area) {
-					setNotPossible(areas[i]);
+					stack.add(new StackItem(this, areas[i]));
 				}
 			}
+
+			processStack();
 		}
 
 		public void setNotPossible(LocalArea area) {
-			record StackItem(Cell cell, LocalArea localArea) { }
+			stack.add(new StackItem(this, area));
 
-			// Use our own stack here, for large images we will overflow anyway
-			Deque<StackItem> stack = new ArrayDeque<>();
-
-			StackItem next = new StackItem(this, area);
-			do {
-				area = next.localArea;
-				var cell = next.cell;
-
-				if (cell.possibleTypes.get(area.index())) {
-					cell.possibleTypes.clear(area.index());
-
-					cell.numberOfPossibleTypes--;
-					cell.sumProbability -= area.probability();
-					cell.sumEntropy -= area.individualEntropy();
-
-					if (cell.numberOfPossibleTypes == 0) {
-						throw new GenerationContradictionException(cell.x, cell.y);
-					}
-
-					for (var d : Direction.values()) {
-						int nx = cell.x + d.x, ny = cell.y + d.y;
-						if (nx < 0 || nx >= height || ny < 0 || ny >= width) {
-							// No need to propagate out of the border of the world
-							continue;
-						}
-
-						var neighbour = get(cell.x + d.x, cell.y + d.y);
-						var compatibleRegions = area.compatibility(d);
-
-						for (int i = compatibleRegions.nextSetBit(0); i >= 0; i = compatibleRegions.nextSetBit(i + 1)) {
-							if (--neighbour.typeAgreement(d.opposite())[i] == 0) {
-								stack.add(new StackItem(neighbour, areas[i]));
-							}
-						}
-					}
-				}
-
-				next = stack.poll();
-			} while(next != null);
+			processStack();
 		}
 
 		private LocalArea observeType(Random random) {
 			if (possibleTypes.isEmpty()) {
 				throw new IllegalStateException("Cannot observe an invalid state");
+			}
+
+			if (numberOfPossibleTypes == 1) {
+				return areas[possibleTypes.length() - 1];
 			}
 
 			double r = random.nextDouble(sumProbability);
@@ -155,9 +142,9 @@ public final class WaveCollapseGridGenerator {
 		@Override
 		public String toString() {
 			if (observed != null) {
-				return "Observed: %s".formatted(observed.toString());
+				return "(%d, %d) Observed: %s".formatted(x, y, observed.toString());
 			} else {
-				return "Unknown: [%s]".formatted(possibleTypes.stream().mapToObj(i -> areas[i]).map(LocalArea::toString).collect(Collectors.joining(", ")));
+				return "(%d, %d) Unknown: [%s]".formatted(x, y, possibleTypes.stream().mapToObj(i -> areas[i]).map(LocalArea::toString).collect(Collectors.joining(", ")));
 			}
 		}
 	}
@@ -165,22 +152,50 @@ public final class WaveCollapseGridGenerator {
 	private final double sumProbability, sumEntropy;
 	private final Cell[][] cells;
 
+	record StackItem(Cell cell, LocalArea area) { }
+
+	// Use our own stack here, for large images we will stack-overflow without it
+	Deque<StackItem> stack = new ArrayDeque<>();
+
+	private void processStack() {
+		StackItem item;
+		while ((item = stack.poll()) != null) {
+			if (item.cell.possibleTypes.get(item.area.index())) {
+				for (var d : Direction.values()) {
+					int nx = item.cell.x + d.x, ny = item.cell.y + d.y;
+					if (nx < 0 || nx >= height || ny < 0 || ny >= width) {
+						// No need to propagate out of the border of the world
+						continue;
+					}
+
+					var neighbour = get(item.cell.x + d.x, item.cell.y + d.y);
+					var compatibleRegions = item.area.compatibility(d);
+
+					for (int i = compatibleRegions.nextSetBit(0); i >= 0; i = compatibleRegions.nextSetBit(i + 1)) {
+						if (--neighbour.typeAgreement(d.opposite())[i] == 0) {
+							stack.add(new StackItem(neighbour, areas[i]));
+						}
+					}
+				}
+
+				item.cell.possibleTypes.clear(item.area.index());
+
+				item.cell.numberOfPossibleTypes--;
+				item.cell.sumProbability -= item.area.probability();
+				item.cell.sumEntropy -= item.area.individualEntropy();
+
+				if (item.cell.numberOfPossibleTypes == 0) {
+					throw new GenerationContradictionException(item.cell);
+				}
+			}
+		}
+	}
+
 	public WaveCollapseGridGenerator(int width, int height, LocalArea[] areas) {
 		this.width = width;
 		this.height = height;
 
 		this.areas = areas;
-
-		startingTypeAgreement = new EnumMap<>(Direction.class);
-		for (var d : Direction.values()) {
-			var agreement = new int[areas.length];
-
-			for (int i = 0; i < areas.length; i++) {
-				agreement[i] = areas[i].compatibility(d).cardinality();
-			}
-
-			startingTypeAgreement.put(d, agreement);
-		}
 
 		double localSumProbability = 0.0, localSumEntropy = 0.0;
 		for (LocalArea area : areas) {

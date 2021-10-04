@@ -1,19 +1,23 @@
 package brownshome.unreasonableodds.generation;
 
 public class GenerationContradictionException extends IllegalStateException {
-	private final int x, y;
+	private final WaveCollapseGridGenerator.Cell cell;
 
-	public GenerationContradictionException(int x, int y) {
-		super("Contradictory cell (%d, %d)".formatted(x, y));
-		this.x = x;
-		this.y = y;
+	public GenerationContradictionException(WaveCollapseGridGenerator.Cell cell) {
+		this("Contradictory cell: %s".formatted(cell), cell);
 	}
 
-	public int x() {
-		return x;
+	public GenerationContradictionException(String s, WaveCollapseGridGenerator.Cell cell) {
+		super(s);
+		this.cell = cell;
 	}
 
-	public int y() {
-		return y;
+	public GenerationContradictionException(String message, Throwable cause, WaveCollapseGridGenerator.Cell cell) {
+		super(message, cause);
+		this.cell = cell;
+	}
+
+	public final WaveCollapseGridGenerator.Cell cell() {
+		return cell;
 	}
 }

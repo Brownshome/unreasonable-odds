@@ -1,10 +1,9 @@
 package brownshome.unreasonableodds.generation;
 
 import java.util.*;
-import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public final class FloorTileGenerator {
-	private final TileType borderType;
 	private final int localAreaSize;
 	private final TileType[][] archetype;
 
@@ -81,8 +80,7 @@ public final class FloorTileGenerator {
 
 	private final LocalArea[] localAreas;
 
-	public FloorTileGenerator(TileType borderType, int localAreaSize, TileType[][] archetype) {
-		this.borderType = borderType;
+	public FloorTileGenerator(int localAreaSize, TileType[][] archetype) {
 		this.localAreaSize = localAreaSize;
 		this.archetype = archetype;
 
@@ -90,10 +88,10 @@ public final class FloorTileGenerator {
 		assert height != 0;
 		int width = archetype[0].length;
 
-		localAreas = generateLocalAreas(localAreaSize, archetype, width, height, borderType);
+		localAreas = generateLocalAreas(localAreaSize, archetype, width, height);
 	}
 
-	private static LocalArea[] generateLocalAreas(int localAreaSize, TileType[][] archetype, int width, int height, TileType borderType) {
+	private static LocalArea[] generateLocalAreas(int localAreaSize, TileType[][] archetype, int width, int height) {
 		@FunctionalInterface
 		interface TileGenerator {
 			TileType get(int x, int y);
@@ -138,29 +136,43 @@ public final class FloorTileGenerator {
 		}
 
 		Map<Segment, Integer> counts = new HashMap<>();
+		Map<Direction, Set<Segment>> borderSegments = new EnumMap<>(Direction.class);
+		for (var d : Direction.values()) {
+			borderSegments.put(d, new HashSet<>());
+		}
 
-		for (int y = 1 - localAreaSize; y < height; y++) for (int x = 1 - localAreaSize; x < width; x++) {
+		for (int y = 0; y <= height - localAreaSize; y++) for (int x = 0; x <= width - localAreaSize; x++) {
 			int yOffset = y, xOffset = x;
 
-			var segment = Segment.makeSegment((localX, localY) -> {
-				localX += xOffset;
-				localY += yOffset;
+			var segment = Segment.makeSegment((localX, localY) -> archetype[localY + yOffset][localX + xOffset], localAreaSize);
 
-				if (localY < 0 || localY >= height
-						|| localX < 0 || localX >= width) {
-					return borderType;
-				}
+			Set<Direction> borders = EnumSet.noneOf(Direction.class);
+			if (x == 0) {
+				borders.add(Direction.LEFT);
+			} else if (x == width - localAreaSize) {
+				borders.add(Direction.RIGHT);
+			}
 
-				return archetype[localY][localX];
-			}, localAreaSize);
-
-			// Don't include the border items in the calculation
-			boolean isBorder = y < 0 || x < 0;
+			if (y == 0) {
+				borders.add(Direction.DOWN);
+			} else if (y == height - localAreaSize) {
+				borders.add(Direction.UP);
+			}
 
 			for (int i = 0; i < 4; i++) {
-				counts.merge(segment, isBorder ? 0 : 1, Integer::sum);
-				counts.merge(segment.reflect(), isBorder ? 0 : 1, Integer::sum);
+				counts.merge(segment, 1, Integer::sum);
+				for (var border : borders) {
+					borderSegments.get(border).add(segment);
+				}
+
+				var reflected = segment.reflect();
+				counts.merge(reflected, 1, Integer::sum);
+				for (var border : borders) {
+					borderSegments.get(border).add(reflected);
+				}
+
 				segment = segment.rotate();
+				borders = borders.stream().map(Direction::rotate).collect(Collectors.toCollection(() -> EnumSet.noneOf(Direction.class)));
 			}
 		}
 
@@ -169,22 +181,58 @@ public final class FloorTileGenerator {
 			count += i;
 		}
 
-		LocalArea[] areas = new LocalArea[counts.size()];
-		{ int i = 0;
-			for (var entry : counts.entrySet()) {
-				var segment = entry.getKey();
-				var frequency = entry.getValue();
+		// The first tile is a corner tile, the next 4 areas are border tiles
+		LocalArea[] areas = new LocalArea[counts.size() + Direction.values().length + 1];
 
-				areas[i] = new TileArea(i,
-						(double) frequency / count,
-						segment.size,
-						segment.tiles);
-
-				i++;
+		int i = 0;
+		areas[i] = new LocalArea(i, 0.0) {
+			@Override
+			public String toString() {
+				return "CORNER";
 			}
+		};
+
+		i++;
+
+		for (var d : Direction.values()) {
+			areas[i] = new LocalArea(i, 0.0) {
+				@Override
+				public String toString() {
+					return d.toString();
+				}
+			};
+
+			var side = d.rotate();
+			// Compatible with self along edge
+			LocalArea.makeCompatible(areas[i], side, areas[i]);
+
+			// Corner connections
+			LocalArea.makeCompatible(areas[0], side, areas[i]);
+			LocalArea.makeCompatible(areas[i], side, areas[0]);
+
+			i++;
 		}
 
-		for (int a = 0; a < areas.length; a++) for (int b = a; b < areas.length; b++) {
+		for (var entry : counts.entrySet()) {
+			var segment = entry.getKey();
+			var frequency = entry.getValue();
+
+			areas[i] = new TileArea(i,
+					(double) frequency / count,
+					segment.size,
+					segment.tiles);
+
+			// Set the border segments compatible to any tile found on the border
+			for (var d : Direction.values()) {
+				if (borderSegments.get(d).contains(segment)) {
+					LocalArea.makeCompatible(areas[i], d, areas[d.ordinal() + 1]);
+				}
+			}
+
+			i++;
+		}
+
+		for (int a = Direction.values().length + 1; a < areas.length; a++) for (int b = a; b < areas.length; b++) {
 			var areaA = (TileArea) areas[a];
 			var areaB = (TileArea) areas[b];
 
@@ -202,25 +250,31 @@ public final class FloorTileGenerator {
 		}
 
 		int width = grid[0].length;
-		int padding = localAreaSize - 1;
 
-		var generator = new WaveCollapseGridGenerator(width + padding, height + padding, localAreas);
+		int genHeight = height + 2 - (localAreaSize - 1), genWidth = width + 2 - (localAreaSize - 1);
+
+		// One tile pad for the border, and subtract areaSize - 1 as we write NxN blocks
+		var generator = new WaveCollapseGridGenerator(genWidth, genHeight, localAreas);
+
+		// Set the corner tiles. This should be enough to collapse all the edges
+		var cornerTile = localAreas[0];
+		generator.get(0, 0).collapse(cornerTile);
+		generator.get(genWidth - 1, genHeight - 1).collapse(cornerTile);
 
 		// Set the specified tiles in the grid
-		for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
-			var cell = generator.get(x, y);
-			int finalX = x, finalY = y;
+		for (int y = 0; y < height - (localAreaSize - 1); y++) for (int x = 0; x < width - (localAreaSize - 1); x++) {
+			var cell = generator.get(x + 1, y + 1);
+			int tileX = x, tileY = y;
 
 			List<TileArea> bannedAreas = new ArrayList<>();
 			cell.possibleTypes().forEach(a -> {
 				var tileArea = (TileArea) a;
 
 				for (int ly = 0; ly < tileArea.areaSize; ly++) for (int lx = 0; lx < tileArea.areaSize; lx++) {
-					int gx = lx + finalX - padding;
-					int gy = ly + finalY - padding;
+					int gx = lx + tileX;
+					int gy = ly + tileY;
 
-					var tile = gx < 0 || gx >= width || gy < 0 || gy >= height
-							? borderType : grid[gy][gx];
+					var tile = grid[gy][gx];
 
 					if (tile != null && !tileArea.get(lx, ly).equals(tile)) {
 						bannedAreas.add(tileArea);
@@ -241,7 +295,10 @@ public final class FloorTileGenerator {
 
 		// Write out the grid
 		for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
-			grid[y][x] = ((TileArea) generator.get(x + padding, y + padding).observed()).get(0, 0);
+			int tx = Math.min(x, width - localAreaSize);
+			int ty = Math.min(y, height - localAreaSize);
+
+			grid[y][x] = ((TileArea) generator.get(tx + 1, ty + 1).observed()).get(x - tx, y - ty);
 		}
 	}
 }
