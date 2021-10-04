@@ -84,12 +84,12 @@ public class Universe implements Comparable<Universe> {
 		private final List<Entity> entities;
 		private final Instant now;
 		private final BranchRecord branchRecord;
-		private final List<Collidable> collidables;
+		private final Set<Collidable> collidables;
 
 		protected Builder(Instant now, BranchRecord branchRecord) {
 			this.now = now;
 			this.entities = new ArrayList<>();
-			this.collidables = new ArrayList<>();
+			this.collidables = new HashSet<>();
 			this.branchRecord = branchRecord;
 		}
 
@@ -122,7 +122,12 @@ public class Universe implements Comparable<Universe> {
 		}
 
 		protected final CollisionDetector collisionDetector() {
-			return CollisionDetector.createDetector(collidables);
+			var old = new HashSet<>(collisionDetector.collidables());
+			if (old.equals(collidables)) {
+				return collisionDetector;
+			} else {
+				return CollisionDetector.createDetector(new ArrayList<>(collidables));
+			}
 		}
 
 		/**

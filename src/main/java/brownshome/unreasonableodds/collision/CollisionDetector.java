@@ -28,6 +28,10 @@ public final class CollisionDetector {
 		return new CollisionDetector(0, new BitSet[0][0], Collections.emptyList());
 	}
 
+	public Collection<Collidable> collidables() {
+		return shapes;
+	}
+
 	@FunctionalInterface
 	private interface CoordinateConsumer {
 		void apply(int x, int y);
