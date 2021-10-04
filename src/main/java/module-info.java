@@ -3,11 +3,12 @@
  */
 module brownshome.unreasonableodds {
 	exports brownshome.unreasonableodds;
+	exports brownshome.unreasonableodds.collision;
 	exports brownshome.unreasonableodds.components;
 	exports brownshome.unreasonableodds.entites;
-	exports brownshome.unreasonableodds.tile;
+	exports brownshome.unreasonableodds.generation;
 	exports brownshome.unreasonableodds.history;
-	exports brownshome.unreasonableodds.collision;
+	exports brownshome.unreasonableodds.tile;
 
 	requires transitive brownshome.vecmath;
 }
