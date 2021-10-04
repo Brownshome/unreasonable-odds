@@ -1,5 +1,7 @@
 package brownshome.unreasonableodds.generation;
 
+import brownshome.unreasonableodds.tile.Tile;
+
 public interface TileType {
 	/**
 	 * A version of this tile reflected about the x-axis
@@ -12,4 +14,6 @@ public interface TileType {
 	 * @return the tile
 	 */
 	TileType rotate();
+
+	Tile createTile(int x, int y);
 }

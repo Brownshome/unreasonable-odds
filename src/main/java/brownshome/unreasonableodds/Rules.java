@@ -6,14 +6,17 @@ import java.util.*;
 
 import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.entites.*;
+import brownshome.unreasonableodds.generation.FloorTileGenerator;
+import brownshome.unreasonableodds.generation.TileType;
 import brownshome.unreasonableodds.tile.ClosedTile;
+import brownshome.unreasonableodds.tile.Tile;
 import brownshome.vecmath.Rot2;
 import brownshome.vecmath.Vec2;
 
 /**
  * A collection of rules for the game
  */
-public class Rules {
+public abstract class Rules {
 	private final Instant epoch = Instant.now();
 
 	/**
@@ -40,20 +43,40 @@ public class Rules {
 		return Duration.ZERO;
 	}
 
-	public StaticMap generateStaticMap() {
-		return StaticMap.createStaticMap(List.of(
-				ClosedTile.createTile(Vec2.of(0.4, 0.4), Vec2.of(0.6, 0.6))
-		));
+	protected abstract TileType[][] createArchetype();
+
+	protected int generatorAreaSize() {
+		return 2;
 	}
 
-	public Multiverse createMultiverse(Collection<Player> players, Random random) {
+	protected abstract TileType[][] createInitialGrid();
+
+	protected StaticMap generateStaticMap(Random random) {
+		var generator = new FloorTileGenerator(generatorAreaSize(), createArchetype());
+		var grid = createInitialGrid();
+
+		generator.generateGrid(grid, random);
+
+		List<Tile> tiles = new ArrayList<>();
+		for (int y = 0; y < grid.length; y++) for (int x = 0; x < grid[y].length; x++) {
+			var tile = grid[y][x].createTile(x, y);
+
+			if (tile != null) {
+				tiles.add(tile);
+			}
+		}
+
+		return StaticMap.createStaticMap(tiles);
+	}
+
+	protected Multiverse createMultiverse(Collection<Player> players, Random random) {
 		var initialEntities = new ArrayList<Entity>();
 
 		for (var player : players) {
 			initialEntities.add(createPlayerCharacter(createSpawnPosition(random), player, initialJumpEnergy()));
 		}
 
-		initialEntities.add(generateStaticMap());
+		initialEntities.add(generateStaticMap(random));
 
 		return createMultiverse(createUniverse(initialEntities));
 	}

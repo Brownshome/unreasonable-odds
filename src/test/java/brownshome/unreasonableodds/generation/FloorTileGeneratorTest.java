@@ -2,6 +2,7 @@ package brownshome.unreasonableodds.generation;
 
 import java.util.Random;
 
+import brownshome.unreasonableodds.tile.Tile;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,6 +25,11 @@ class FloorTileGeneratorTest {
 		public String toString() {
 			return "F";
 		}
+
+		@Override
+		public Tile createTile(int x, int y) {
+			throw new UnsupportedOperationException();
+		}
 	}
 
 	private static final class BlankTile implements TileType {
@@ -42,6 +48,11 @@ class FloorTileGeneratorTest {
 		@Override
 		public String toString() {
 			return "B";
+		}
+
+		@Override
+		public Tile createTile(int x, int y) {
+			throw new UnsupportedOperationException();
 		}
 	}
 

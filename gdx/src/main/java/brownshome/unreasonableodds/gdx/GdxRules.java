@@ -6,9 +6,10 @@ import java.util.Random;
 
 import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.components.Position;
-import brownshome.unreasonableodds.entites.StaticMap;
 import brownshome.unreasonableodds.gdx.entities.GdxPlayerCharacter;
-import brownshome.unreasonableodds.gdx.tile.GdxClosedTile;
+import brownshome.unreasonableodds.gdx.generation.GdxClosedTileType;
+import brownshome.unreasonableodds.gdx.generation.GdxOpenTileType;
+import brownshome.unreasonableodds.generation.TileType;
 import brownshome.vecmath.Rot2;
 import brownshome.vecmath.Vec2;
 
@@ -40,9 +41,20 @@ public final class GdxRules extends Rules {
 	}
 
 	@Override
-	public StaticMap generateStaticMap() {
-		return StaticMap.createStaticMap(List.of(
-				GdxClosedTile.createTile(Vec2.of(0.4, 0.4), Vec2.of(0.6, 0.6), resources)
-		));
+	protected TileType[][] createArchetype() {
+		var open = new GdxOpenTileType();
+		var close = new GdxClosedTileType(resources);
+
+		return new TileType[][] {
+				{ open, open, open, open },
+				{ open, close, close, open },
+				{ open, close, close, open },
+				{ open, open, open, open },
+		};
+	}
+
+	@Override
+	protected TileType[][] createInitialGrid() {
+		return new TileType[8][8];
 	}
 }
