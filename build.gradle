@@ -56,7 +56,7 @@ dependencies {
 
 	annotationProcessor 'brownshome:netcode-processor:0.1.0-SNAPSHOT'
 
-	runtimeOnly 'brownshome:logging-slf4j:1.0.0'
+	runtimeOnly 'brownshome:logging-slf4j:1.0.1'
 }
 
 publishing {
