@@ -8,6 +8,8 @@ version = '0.1.0-SNAPSHOT'
 
 allprojects {
 	repositories {
+		mavenLocal()
+
 		mavenCentral()
 
 		maven {
@@ -20,6 +22,14 @@ allprojects {
 
 		maven {
 			url = 'https://maven.pkg.github.com/Brownshome/logging'
+			credentials {
+				username project.properties['gpr.usr']
+				password project.properties['gpr.key']
+			}
+		}
+
+		maven {
+			url = 'https://maven.pkg.github.com/Brownshome/game-netcode'
 			credentials {
 				username project.properties['gpr.usr']
 				password project.properties['gpr.key']
@@ -40,6 +50,13 @@ java {
 
 dependencies {
 	api 'brownshome:vecmath:[3.5.0, 4.0.0)'
+
+	implementation 'brownshome:netcode:0.1.0-SNAPSHOT'
+	compileOnly 'brownshome:netcode-annotations:0.1.0-SNAPSHOT'
+
+	annotationProcessor 'brownshome:netcode-processor:0.1.0-SNAPSHOT'
+
+	runtimeOnly 'brownshome:logging-slf4j:1.0.0'
 }
 
 publishing {

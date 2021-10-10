@@ -1,16 +1,16 @@
-package brownshome.unreasonableodds.gdx;
+package brownshome.unreasonableodds.gdx.screen;
 
 import com.badlogic.gdx.*;
 
-abstract class SubScreen implements Screen, InputProcessor {
+public abstract class SubScreen implements Screen, InputProcessor {
 	private Screen nextScreen = this;
 	private float width, height;
 
-	final void nextScreen(Screen screen) {
+	protected final void nextScreen(Screen screen) {
 		nextScreen = screen;
 	}
 
-	final Screen nextScreen() {
+	public final Screen nextScreen() {
 		return nextScreen;
 	}
 
@@ -25,11 +25,11 @@ abstract class SubScreen implements Screen, InputProcessor {
 		this.height = height;
 	}
 
-	final float width() {
+	protected final float width() {
 		return width;
 	}
 
-	final float height() {
+	protected final float height() {
 		return height;
 	}
 

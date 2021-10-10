@@ -3,6 +3,7 @@ package brownshome.unreasonableodds.gdx;
 import java.util.List;
 
 import brownshome.unreasonableodds.*;
+import brownshome.unreasonableodds.gdx.screen.MultiverseScreen;
 import com.badlogic.gdx.math.Affine2;
 
 public class GdxMultiverse extends Multiverse {

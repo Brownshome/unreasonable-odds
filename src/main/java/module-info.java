@@ -9,6 +9,12 @@ module brownshome.unreasonableodds {
 	exports brownshome.unreasonableodds.generation;
 	exports brownshome.unreasonableodds.history;
 	exports brownshome.unreasonableodds.tile;
+	exports brownshome.unreasonableodds.session;
 
 	requires transitive brownshome.vecmath;
+
+	requires static brownshome.netcode.annotation;
+
+	requires brownshome.netcode;
+	opens brownshome.unreasonableodds.net to brownshome.netcode;
 }

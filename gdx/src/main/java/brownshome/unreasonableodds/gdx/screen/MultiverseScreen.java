@@ -1,10 +1,10 @@
-package brownshome.unreasonableodds.gdx;
+package brownshome.unreasonableodds.gdx.screen;
 
 import java.time.Duration;
 import java.util.List;
 
 import brownshome.unreasonableodds.Multiverse;
-
+import brownshome.unreasonableodds.gdx.*;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
@@ -13,13 +13,20 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 /**
  * A screen that displays a given multiverse
  */
-class MultiverseScreen extends SubScreen {
+public class MultiverseScreen extends SubScreen {
 	public static final float SIZE_IN_PIXELS = 512f;
 
 	private final ApplicationResources resources;
 	private final GdxMultiverse multiverse;
 	private final OrthographicCamera camera;
 	private final GdxPlayer player;
+
+	MultiverseScreen(ApplicationResources resources, GdxMultiverse multiverse, GdxPlayer player) {
+		this.resources = resources;
+		this.player = player;
+		this.multiverse = multiverse;
+		this.camera = new OrthographicCamera();
+	}
 
 	MultiverseScreen(ApplicationResources resources, GdxRules rules) {
 		this.resources = resources;

@@ -2,6 +2,8 @@ package brownshome.unreasonableodds.gdx;
 
 import browngu.logging.Logger;
 import brownshome.unreasonableodds.gdx.logger.GdxLogger;
+import brownshome.unreasonableodds.gdx.screen.SubScreen;
+import brownshome.unreasonableodds.gdx.screen.TopMenuScreen;
 import com.badlogic.gdx.ApplicationLogger;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
@@ -10,9 +12,10 @@ import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
 public class Main extends Game {
 	private ApplicationResources resources;
 
-	public static void main (String[] arg) {
+	public static void main (String... arg) {
 		Thread.setDefaultUncaughtExceptionHandler((thread, exception) -> {
 			Logger.logger().log(exception, "Uncaught exception", exception);
+			System.exit(-1);
 		});
 
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
@@ -32,7 +35,7 @@ public class Main extends Game {
 	public void create () {
 		resources = new ApplicationResources();
 
-		setScreen(new CreateMultiverseScreen(resources));
+		setScreen(new TopMenuScreen(resources));
 	}
 
 	@Override
@@ -45,7 +48,7 @@ public class Main extends Game {
 	}
 
 	@Override
-	public void dispose () {
+	public void dispose() {
 		super.dispose();
 
 		resources.dispose();
