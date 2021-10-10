@@ -2,6 +2,7 @@ package brownshome.unreasonableodds.gdx.screen;
 
 import brownshome.unreasonableodds.gdx.ApplicationResources;
 import brownshome.unreasonableodds.session.Session;
+
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
@@ -52,7 +53,7 @@ public abstract class LobbyScreen extends StageScreen {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
 				if (leaveButton.isPressed()) {
-					leave();
+					nextScreen(new TopMenuScreen(resources));
 				}
 			}
 		});
@@ -86,8 +87,8 @@ public abstract class LobbyScreen extends StageScreen {
 		return session;
 	}
 
-	/**
-	 * Called when the user has pressed the leave-lobby button
-	 */
-	protected abstract void leave();
+	@Override
+	public void dispose() {
+		session.close();
+	}
 }

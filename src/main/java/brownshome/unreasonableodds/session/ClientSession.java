@@ -13,26 +13,21 @@ import brownshome.unreasonableodds.net.*;
 /**
  * Represents a client game that connects to a hosted game
  */
-public class ClientSession extends Session {
-	private final UDPConnectionManager connectionManager;
+public class ClientSession extends UDPSession {
 	private final UDPConnection connection;
 
 	private List<String> players;
 
 	public ClientSession(String name, InetSocketAddress address, Executor executor) throws IOException {
-		super(name);
+		super(name, new UDPConnectionManager(List.of(new BaseSchema(),
+				new UDPSchema(),
+				new UnreasonableOddsSchema())), executor);
 
 		this.players = new ArrayList<>();
 
-		connectionManager = new UDPConnectionManager(List.of(new BaseSchema(),
-				new UDPSchema(),
-				new UnreasonableOddsSchema()));
-		connectionManager.registerExecutor("default", executor, 1);
-
-		connection = connectionManager.getOrCreateConnection(address);
+		connection = connectionManager().getOrCreateConnection(address);
 		connection.connect();
-
-		name(name());
+		connection.send(new SetNamePacket(name));
 	}
 
 	@Override
@@ -51,17 +46,8 @@ public class ClientSession extends Session {
 	}
 
 	@Override
-	public final InetSocketAddress address() {
-		return connectionManager.address();
-	}
-
-	@Override
-	public void leave() {
+	public void close() {
 		connection.send(new LeaveSessionPacket());
-		connectionManager.close();
-	}
-
-	public void hostLeft() {
-		connectionManager.close();
+		super.close();
 	}
 }

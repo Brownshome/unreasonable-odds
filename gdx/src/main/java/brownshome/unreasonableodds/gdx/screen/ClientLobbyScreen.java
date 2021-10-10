@@ -14,9 +14,4 @@ public class ClientLobbyScreen extends LobbyScreen {
 		var readyButton = new TextButton("Ready", resources.skin());
 		mainSlot(readyButton).width(200.0f).height(80.0f);
 	}
-
-	@Override
-	protected void leave() {
-		session.leave();
-	}
 }

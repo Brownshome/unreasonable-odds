@@ -15,19 +15,14 @@ import brownshome.unreasonableodds.net.*;
 /**
  * Represents a hosted game that other people can connect to
  */
-public class HostSession extends Session implements AutoCloseable {
+public class HostSession extends UDPSession {
 	private static final System.Logger LOGGER = System.getLogger(HostSession.class.getModule().getName());
-
-	protected final UDPConnectionManager connectionManager;
 	private final Map<InetSocketAddress, String> names;
 
 	public HostSession(String name, int port, Executor executor) throws IOException {
-		super(name);
-
-		this.connectionManager = new UDPConnectionManager(List.of(new BaseSchema(),
+		super(name, new UDPConnectionManager(List.of(new BaseSchema(),
 				new UDPSchema(),
-				new UnreasonableOddsSchema()), port);
-		connectionManager.registerExecutor("default", executor, 1);
+				new UnreasonableOddsSchema()), port), executor);
 
 		LOGGER.log(System.Logger.Level.INFO, "Listening on port {0}", port);
 
@@ -44,7 +39,7 @@ public class HostSession extends Session implements AutoCloseable {
 		var setNamesPacket = new SetNamesPacket(players());
 
 		for (var e : names.entrySet()) {
-			connectionManager.getOrCreateConnection(e.getKey()).send(setNamesPacket);
+			connectionManager().getOrCreateConnection(e.getKey()).send(setNamesPacket);
 		}
 	}
 
@@ -55,7 +50,7 @@ public class HostSession extends Session implements AutoCloseable {
 		var setNamesPacket = new SetNamesPacket(players());
 
 		for (var address : names.keySet()) {
-			connectionManager.getOrCreateConnection(address).send(setNamesPacket);
+			connectionManager().getOrCreateConnection(address).send(setNamesPacket);
 		}
 	}
 
@@ -68,28 +63,20 @@ public class HostSession extends Session implements AutoCloseable {
 		return result;
 	}
 
-	@Override
-	public void close() {
-		connectionManager.close();
-	}
-
-	@Override
-	public InetSocketAddress address() {
-		return connectionManager.address();
-	}
-
-	@Override
-	public void leave() {
-		var sessionClosedPacket = new LeaveSessionPacket();
-
-		for (var address : names.keySet()) {
-			connectionManager.getOrCreateConnection(address).send(sessionClosedPacket);
-		}
-	}
-
 	public void removePlayer(InetSocketAddress address) {
 		if (names.remove(address) == null) {
 			throw new IllegalStateException("Address %s is not part of this session".formatted(address));
 		}
+	}
+
+	@Override
+	public void close() {
+		var leavePacket = new LeaveSessionPacket();
+
+		for (var address : names.keySet()) {
+			connectionManager().getOrCreateConnection(address).send(leavePacket);
+		}
+
+		super.close();
 	}
 }

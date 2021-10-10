@@ -38,7 +38,7 @@ final class Packets {
 	void leaveSession(@ConnectionParam Connection<?> connection) {
 		switch (Session.getHost()) {
 			case HostSession session -> session.removePlayer(((UDPConnection) connection).address());
-			case ClientSession session -> session.hostLeft();
+			case ClientSession session -> session.close();
 			default -> throw new IllegalStateException("No session currently running");
 		}
 	}

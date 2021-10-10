@@ -1,20 +1,19 @@
 package brownshome.unreasonableodds.session;
 
-import java.net.InetSocketAddress;
 import java.util.List;
 
-public abstract class Session {
-	private String name = "";
-
+public abstract class Session implements AutoCloseable {
 	private static final ThreadLocal<Session> THREAD_SESSION = new ThreadLocal<>();
 
 	public static Session getHost() {
 		return THREAD_SESSION.get();
 	}
 
-	public void markThreadAsSessionThread() {
+	public final void markThreadAsSessionThread() {
 		THREAD_SESSION.set(this);
 	}
+
+	protected String name = "";
 
 	protected Session(String name) {
 		this.name = name;
@@ -32,7 +31,6 @@ public abstract class Session {
 
 	public abstract List<String> players();
 
-	public abstract InetSocketAddress address();
-
-	public abstract void leave();
+	@Override
+	public abstract void close();
 }

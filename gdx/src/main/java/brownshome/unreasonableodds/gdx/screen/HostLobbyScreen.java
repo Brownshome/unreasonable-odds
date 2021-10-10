@@ -21,9 +21,4 @@ public class HostLobbyScreen extends LobbyScreen {
 
 		mainSlot(startGameButton).width(200.0f).height(80.0f);
 	}
-
-	@Override
-	protected void leave() {
-		session.leave();
-	}
 }

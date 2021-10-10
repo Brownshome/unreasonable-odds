@@ -7,9 +7,8 @@ import java.net.ServerSocket;
 import brownshome.unreasonableodds.gdx.ApplicationResources;
 import brownshome.unreasonableodds.session.HostSession;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.scenes.scene2d.*;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 
 public class HostScreen extends StageScreen {
@@ -51,6 +50,12 @@ public class HostScreen extends StageScreen {
 						@Override
 						public void setPlayerName(InetSocketAddress address, String name) {
 							super.setPlayerName(address, name);
+							ui.names(players());
+						}
+
+						@Override
+						public void removePlayer(InetSocketAddress address) {
+							super.removePlayer(address);
 							ui.names(players());
 						}
 

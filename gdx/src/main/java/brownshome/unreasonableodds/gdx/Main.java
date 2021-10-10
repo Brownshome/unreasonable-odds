@@ -1,6 +1,7 @@
 package brownshome.unreasonableodds.gdx;
 
 import browngu.logging.Logger;
+import browngu.logging.Output;
 import brownshome.unreasonableodds.gdx.logger.GdxLogger;
 import brownshome.unreasonableodds.gdx.screen.SubScreen;
 import brownshome.unreasonableodds.gdx.screen.TopMenuScreen;
@@ -13,6 +14,8 @@ public class Main extends Game {
 	private ApplicationResources resources;
 
 	public static void main (String... arg) {
+		Logger.logger().setLoggingOutputs(new Output(System.out, System.Logger.Level.DEBUG.getSeverity()));
+
 		Thread.setDefaultUncaughtExceptionHandler((thread, exception) -> {
 			Logger.logger().log(exception, "Uncaught exception", exception);
 			System.exit(-1);
