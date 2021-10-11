@@ -67,7 +67,7 @@ public class HostScreen extends StageScreen {
 					};
 
 					nextScreen(session.ui);
-				} catch(IOException e) {
+				} catch (IOException e) {
 					LOGGER.log(System.Logger.Level.ERROR, "Unable to host game", e);
 					nextScreen(new ErrorScreen(e, resources));
 				}

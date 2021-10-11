@@ -50,4 +50,11 @@ public class ClientSession extends UDPSession {
 		connection.send(new LeaveSessionPacket());
 		super.close();
 	}
+
+	/**
+	 * Called when the host has left the session
+	 */
+	public void hostLeft() {
+		/* Do nothing as the host will close the connection from its end */
+	}
 }

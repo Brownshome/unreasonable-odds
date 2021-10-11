@@ -43,6 +43,12 @@ public class ConnectScreen extends StageScreen {
 								super.players(players);
 								ui.names(players);
 							}
+
+							@Override
+							public void hostLeft() {
+								super.hostLeft();
+								ui.nextScreen(new TopMenuScreen(resources));
+							}
 						};
 
 						nextScreen(session.ui);
