@@ -13,8 +13,8 @@ import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
 public class Main extends Game {
 	private ApplicationResources resources;
 
-	public static void main (String... arg) {
-		Logger.logger().setLoggingOutputs(new Output(System.out, System.Logger.Level.DEBUG.getSeverity()));
+	public static void main(String... arg) {
+		Logger.logger().setLoggingOutputs(new Output(System.out, System.Logger.Level.INFO.getSeverity()));
 
 		Thread.setDefaultUncaughtExceptionHandler((thread, exception) -> {
 			Logger.logger().log(exception, "Uncaught exception", exception);

@@ -16,7 +16,8 @@ import brownshome.unreasonableodds.net.*;
 public class ClientSession extends UDPSession {
 	private final UDPConnection connection;
 
-	private List<String> players;
+	private List<Player> players;
+	private boolean isReady;
 
 	public ClientSession(String name, InetSocketAddress address, Executor executor) throws IOException {
 		super(name, new UDPConnectionManager(List.of(new BaseSchema(),
@@ -28,6 +29,7 @@ public class ClientSession extends UDPSession {
 		connection = connectionManager().getOrCreateConnection(address);
 		connection.connect();
 		connection.send(new SetNamePacket(name));
+		isReady = false;
 	}
 
 	@Override
@@ -36,12 +38,23 @@ public class ClientSession extends UDPSession {
 		connection.send(new SetNamePacket(name));
 	}
 
-	public void players(List<String> players) {
+	public final boolean isReady() {
+		return isReady;
+	}
+
+	public void setReady(boolean ready) {
+		if (isReady != ready) {
+			isReady = ready;
+			connection.send(new SetReadyStatePacket(ready));
+		}
+	}
+
+	public void players(List<Player> players) {
 		this.players = players;
 	}
 
 	@Override
-	public final List<String> players() {
+	public final List<Player> players() {
 		return players;
 	}
 

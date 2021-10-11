@@ -10,7 +10,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 
 public abstract class LobbyScreen extends StageScreen {
 	protected final Session session;
-	private final List<String> playerList;
+	private final List<Session.Player> playerList;
 	private final Table rightPanel;
 
 	public LobbyScreen(ApplicationResources resources, Session session) {
@@ -23,7 +23,7 @@ public abstract class LobbyScreen extends StageScreen {
 		stage().addActor(root);
 
 		playerList = new List<>(resources.skin());
-		playerList.setItems(session.players().toArray(String[]::new));
+		playerList.setItems(session.players().toArray(Session.Player[]::new));
 
 		root.row().expand();
 
@@ -71,8 +71,8 @@ public abstract class LobbyScreen extends StageScreen {
 		return cell;
 	}
 
-	protected final void names(java.util.List<String> players) {
-		playerList.setItems(players.toArray(String[]::new));
+	protected final void players(java.util.List<Session.Player> players) {
+		playerList.setItems(players.toArray(Session.Player[]::new));
 	}
 
 	/**

@@ -12,6 +12,14 @@ public class ClientLobbyScreen extends LobbyScreen {
 		super(resources, session);
 
 		var readyButton = new TextButton("Ready", resources.skin());
+		readyButton.addListener(new ChangeListener() {
+			@Override
+			public void changed(ChangeEvent event, Actor actor) {
+				session.setReady(readyButton.isChecked());
+				readyButton.setText(session.isReady() ? "Un-Ready" : "Ready");
+			}
+		});
+
 		mainSlot(readyButton).width(200.0f).height(80.0f);
 	}
 }

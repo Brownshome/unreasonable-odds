@@ -48,21 +48,9 @@ public class HostScreen extends StageScreen {
 						}
 
 						@Override
-						public void setPlayerName(InetSocketAddress address, String name) {
-							super.setPlayerName(address, name);
-							ui.names(players());
-						}
-
-						@Override
-						public void removePlayer(InetSocketAddress address) {
-							super.removePlayer(address);
-							ui.names(players());
-						}
-
-						@Override
-						public void name(String name) {
-							super.name(name);
-							ui.names(players());
+						protected void onPlayersChanged() {
+							super.onPlayersChanged();
+							ui.players(players());
 						}
 					};
 

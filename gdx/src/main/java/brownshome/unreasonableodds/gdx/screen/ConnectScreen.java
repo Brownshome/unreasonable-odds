@@ -39,9 +39,9 @@ public class ConnectScreen extends StageScreen {
 							{ markThreadAsSessionThread(); }
 
 							@Override
-							public void players(List<String> players) {
+							public void players(List<Player> players) {
 								super.players(players);
-								ui.names(players);
+								ui.players(players);
 							}
 
 							@Override

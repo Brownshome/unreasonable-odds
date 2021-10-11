@@ -17,7 +17,7 @@ import brownshome.unreasonableodds.net.*;
  */
 public class HostSession extends UDPSession {
 	private static final System.Logger LOGGER = System.getLogger(HostSession.class.getModule().getName());
-	private final Map<InetSocketAddress, String> names;
+	private final Map<InetSocketAddress, Player> players;
 
 	public HostSession(String name, int port, Executor executor) throws IOException {
 		super(name, new UDPConnectionManager(List.of(new BaseSchema(),
@@ -26,7 +26,7 @@ public class HostSession extends UDPSession {
 
 		LOGGER.log(System.Logger.Level.INFO, "Listening on port {0}", port);
 
-		this.names = new HashMap<>();
+		this.players = new HashMap<>();
 	}
 
 	public Multiverse startGame(Rules rules) {
@@ -34,46 +34,61 @@ public class HostSession extends UDPSession {
 	}
 
 	public void setPlayerName(InetSocketAddress address, String name) {
-		names.put(address, name);
+		players.compute(address, (a, existing) -> {
+			if (existing != null) {
+				existing.name(name);
+				return existing;
+			} else {
+				return Player.makeClient(name);
+			}
+		});
 
-		var setNamesPacket = new SetNamesPacket(players());
+		onPlayersChanged();
+	}
 
-		for (var e : names.entrySet()) {
-			connectionManager().getOrCreateConnection(e.getKey()).send(setNamesPacket);
-		}
+	public void setReadyState(InetSocketAddress address, boolean ready) {
+		players.get(address).setReady(ready);
+
+		onPlayersChanged();
 	}
 
 	@Override
 	public void name(String name) {
 		super.name(name);
 
-		var setNamesPacket = new SetNamesPacket(players());
+		onPlayersChanged();
+	}
 
-		for (var address : names.keySet()) {
-			connectionManager().getOrCreateConnection(address).send(setNamesPacket);
+	public void removePlayer(InetSocketAddress address) {
+		if (players.remove(address) == null) {
+			throw new IllegalStateException("Address %s is not part of this session".formatted(address));
+		}
+
+		onPlayersChanged();
+	}
+
+	protected void onPlayersChanged() {
+		var sendPlayersPacket = new SendPlayersPacket(players());
+
+		for (var address : players.keySet()) {
+			connectionManager().getOrCreateConnection(address).send(sendPlayersPacket);
 		}
 	}
 
 	@Override
-	public List<String> players() {
-		var result = new ArrayList<>(names.values());
-		result.add(name());
+	public List<Player> players() {
+		var result = new ArrayList<>(players.values());
+		result.add(Player.makeHost(name));
 		result.sort(null);
 
 		return result;
-	}
-
-	public void removePlayer(InetSocketAddress address) {
-		if (names.remove(address) == null) {
-			throw new IllegalStateException("Address %s is not part of this session".formatted(address));
-		}
 	}
 
 	@Override
 	public void close() {
 		var leavePacket = new LeaveSessionPacket();
 
-		for (var address : names.keySet()) {
+		for (var address : players.keySet()) {
 			connectionManager().getOrCreateConnection(address).send(leavePacket);
 		}
 
