@@ -1,4 +1,4 @@
-package brownshome.unreasonableodds.net;
+package brownshome.unreasonableodds.session.net;
 
 import java.util.List;
 
@@ -54,7 +54,7 @@ final class Packets {
 	@DefinePacket(name = "SendPlayers")
 	@MakeReliable
 	@MakeOrdered({ "SendPlayers" })
-	static void setClientNames(@UseConverter(Session.PlayerConverter.class) List<Session.Player> players) {
+	static void setClientNames(@UseConverter(SessionPlayerConverter.class) List<SessionPlayer> players) {
 		LOGGER.log(System.Logger.Level.TRACE, () -> "Received client name list %s".formatted(players));
 
 		var session = (ClientSession) Session.getHost();

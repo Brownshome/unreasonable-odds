@@ -16,5 +16,8 @@ module brownshome.unreasonableodds {
 	requires static brownshome.netcode.annotation;
 
 	requires brownshome.netcode;
+
+	// Reflection access to schema names
+	opens brownshome.unreasonableodds.session.net to brownshome.netcode;
 	opens brownshome.unreasonableodds.net to brownshome.netcode;
 }

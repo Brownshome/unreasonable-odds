@@ -21,7 +21,7 @@ public class Multiverse {
 		return new Multiverse(rules, universes);
 	}
 
-	protected final List<Universe> universes() {
+	public final List<Universe> universes() {
 		return universes;
 	}
 

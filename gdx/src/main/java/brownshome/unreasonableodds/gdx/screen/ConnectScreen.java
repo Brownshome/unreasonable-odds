@@ -8,6 +8,7 @@ import java.util.List;
 import browngu.logging.Logger;
 import brownshome.unreasonableodds.gdx.ApplicationResources;
 import brownshome.unreasonableodds.session.ClientSession;
+import brownshome.unreasonableodds.session.SessionPlayer;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
@@ -39,7 +40,7 @@ public class ConnectScreen extends StageScreen {
 							{ markThreadAsSessionThread(); }
 
 							@Override
-							public void players(List<Player> players) {
+							public void players(List<SessionPlayer> players) {
 								super.players(players);
 								ui.players(players);
 							}

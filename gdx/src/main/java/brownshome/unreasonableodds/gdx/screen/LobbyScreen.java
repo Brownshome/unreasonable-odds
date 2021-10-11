@@ -1,29 +1,35 @@
 package brownshome.unreasonableodds.gdx.screen;
 
 import brownshome.unreasonableodds.gdx.ApplicationResources;
+import brownshome.unreasonableodds.gdx.GdxPlayer;
 import brownshome.unreasonableodds.session.Session;
 
+import brownshome.unreasonableodds.session.SessionPlayer;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 
 public abstract class LobbyScreen extends StageScreen {
-	protected final Session session;
-	private final List<Session.Player> playerList;
+	private final Session session;
+	private final List<SessionPlayer> playerList;
 	private final Table rightPanel;
+	private final GdxPlayer player;
+
+	private boolean disposeSession = true;
 
 	public LobbyScreen(ApplicationResources resources, Session session) {
 		super(resources);
 
 		this.session = session;
+		this.player = new GdxPlayer();
 
 		var root = new Table(resources.skin());
 		root.setFillParent(true);
 		stage().addActor(root);
 
 		playerList = new List<>(resources.skin());
-		playerList.setItems(session.players().toArray(Session.Player[]::new));
+		playerList.setItems(session.players().toArray(SessionPlayer[]::new));
 
 		root.row().expand();
 
@@ -71,8 +77,12 @@ public abstract class LobbyScreen extends StageScreen {
 		return cell;
 	}
 
-	protected final void players(java.util.List<Session.Player> players) {
-		playerList.setItems(players.toArray(Session.Player[]::new));
+	protected final void players(java.util.List<SessionPlayer> players) {
+		playerList.setItems(players.toArray(SessionPlayer[]::new));
+	}
+
+	protected final GdxPlayer player() {
+		return player;
 	}
 
 	/**
@@ -87,8 +97,14 @@ public abstract class LobbyScreen extends StageScreen {
 		return session;
 	}
 
+	protected final void disposeSession(boolean shouldDispose) {
+		disposeSession = shouldDispose;
+	}
+
 	@Override
 	public void dispose() {
-		session.close();
+		if (disposeSession) {
+			session.close();
+		}
 	}
 }

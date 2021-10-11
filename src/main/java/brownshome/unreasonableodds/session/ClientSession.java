@@ -6,9 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 
-import brownshome.netcode.BaseSchema;
 import brownshome.netcode.udp.*;
-import brownshome.unreasonableodds.net.*;
+import brownshome.unreasonableodds.session.net.*;
 
 /**
  * Represents a client game that connects to a hosted game
@@ -16,18 +15,16 @@ import brownshome.unreasonableodds.net.*;
 public class ClientSession extends UDPSession {
 	private final UDPConnection connection;
 
-	private List<Player> players;
+	private List<SessionPlayer> players;
 	private boolean isReady;
 
 	public ClientSession(String name, InetSocketAddress address, Executor executor) throws IOException {
-		super(name, new UDPConnectionManager(List.of(new BaseSchema(),
-				new UDPSchema(),
-				new UnreasonableOddsSchema())), executor);
+		super(name, new UDPConnectionManager(allSchema()), executor);
 
 		this.players = new ArrayList<>();
 
 		connection = connectionManager().getOrCreateConnection(address);
-		connection.connect();
+		connection.connect(sessionSchema());
 		connection.send(new SetNamePacket(name));
 		isReady = false;
 	}
@@ -49,12 +46,12 @@ public class ClientSession extends UDPSession {
 		}
 	}
 
-	public void players(List<Player> players) {
+	public void players(List<SessionPlayer> players) {
 		this.players = players;
 	}
 
 	@Override
-	public final List<Player> players() {
+	public final List<SessionPlayer> players() {
 		return players;
 	}
 

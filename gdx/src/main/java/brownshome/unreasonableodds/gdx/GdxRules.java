@@ -31,11 +31,6 @@ public final class GdxRules extends Rules {
 	}
 
 	@Override
-	protected GdxMultiverse createMultiverse(Universe baseUniverse) {
-		return GdxMultiverse.createMultiverse(this, List.of(baseUniverse));
-	}
-
-	@Override
 	protected Position createSpawnPosition(Random random) {
 		return new Position(Vec2.ZERO, Rot2.IDENTITY);
 	}
