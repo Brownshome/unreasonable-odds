@@ -85,6 +85,10 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 
 		var gdxBuilder = (GdxUniverse.Builder) builder;
 		gdxBuilder.addRenderable(this);
-		gdxBuilder.flagUniverseAsActive();
+
+		if (player() instanceof GdxPlayer) {
+			// This is the keyboard controlled one
+			gdxBuilder.flagUniverseAsActive();
+		}
 	}
 }

@@ -1,30 +1,40 @@
-package brownshome.unreasonableodds.gdx;
+package brownshome.unreasonableodds.gdx.screen;
 
 import java.time.Duration;
 import java.util.List;
 
 import brownshome.unreasonableodds.Multiverse;
-
+import brownshome.unreasonableodds.gdx.*;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.math.Affine2;
 
 /**
  * A screen that displays a given multiverse
  */
-class MultiverseScreen extends SubScreen {
+public class MultiverseScreen extends SubScreen {
 	public static final float SIZE_IN_PIXELS = 512f;
+	private static final float UNIVERSE_SIZE = SIZE_IN_PIXELS * 12 / 16;
+	private static final float INTER_UNIVERSE_STRIDE = SIZE_IN_PIXELS;
 
 	private final ApplicationResources resources;
-	private final GdxMultiverse multiverse;
+	private final Multiverse multiverse;
 	private final OrthographicCamera camera;
 	private final GdxPlayer player;
+
+	MultiverseScreen(ApplicationResources resources, Multiverse multiverse, GdxPlayer player) {
+		this.resources = resources;
+		this.player = player;
+		this.multiverse = multiverse;
+		this.camera = new OrthographicCamera();
+	}
 
 	MultiverseScreen(ApplicationResources resources, GdxRules rules) {
 		this.resources = resources;
 		this.player = new GdxPlayer();
-		this.multiverse = (GdxMultiverse) rules.createMultiverse(List.of(player));
+		this.multiverse = rules.createMultiverse(List.of(player));
 		this.camera = new OrthographicCamera();
 	}
 
@@ -36,7 +46,32 @@ class MultiverseScreen extends SubScreen {
 		resources.batch().setProjectionMatrix(camera.combined);
 
 		multiverse.step(Duration.ofNanos((long) (delta * 1e9)));
-		multiverse.render();
+
+		Affine2 transform = new Affine2();
+
+		var universes = multiverse.universes();
+		universes.sort(null);
+
+		int index = 0;
+		for (var universe : universes) {
+			if (((GdxUniverse) universe).isActive()) {
+				break;
+			}
+
+			index++;
+		}
+
+		assert index != universes.size();
+
+		transform.scale(UNIVERSE_SIZE, UNIVERSE_SIZE);
+		transform.translate(-0.5f, -0.5f);
+		transform.preTranslate(-INTER_UNIVERSE_STRIDE * index, 0f);
+
+		for (var universe : universes) {
+			((GdxUniverse) universe).render(transform);
+
+			transform.preTranslate(INTER_UNIVERSE_STRIDE, 0f);
+		}
 
 		resources.batch().end();
 	}
