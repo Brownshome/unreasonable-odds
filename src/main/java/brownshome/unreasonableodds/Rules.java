@@ -3,11 +3,13 @@ package brownshome.unreasonableodds;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.entites.*;
 import brownshome.unreasonableodds.generation.FloorTileGenerator;
 import brownshome.unreasonableodds.generation.TileType;
+import brownshome.unreasonableodds.session.UDPSessionPlayer;
 import brownshome.unreasonableodds.tile.ClosedTile;
 import brownshome.unreasonableodds.tile.Tile;
 import brownshome.vecmath.Rot2;
@@ -33,10 +35,6 @@ public abstract class Rules {
 	 */
 	public Duration jumpScarDuration() {
 		return Duration.ofSeconds(10);
-	}
-
-	public Multiverse createMultiverse(Collection<Player> players) {
-		return createMultiverse(players, new Random());
 	}
 
 	protected Duration initialJumpEnergy() {
@@ -67,6 +65,14 @@ public abstract class Rules {
 		}
 
 		return StaticMap.createStaticMap(tiles);
+	}
+
+	public Multiverse createNetworkedMultiverse(Collection<UDPSessionPlayer> players, Instant startTime) {
+		return createMultiverse(players.stream().map(UDPSessionPlayer::networkPlayer).collect(Collectors.toList()), new Random());
+	}
+
+	public Multiverse createMultiverse(Collection<Player> players) {
+		return createMultiverse(players, new Random());
 	}
 
 	protected Multiverse createMultiverse(Collection<Player> players, Random random) {
@@ -117,5 +123,9 @@ public abstract class Rules {
 
 	public double energyGainRate() {
 		return 1.0;
+	}
+
+	public Instant gameStartTime() {
+		return Instant.now().plusSeconds(5);
 	}
 }

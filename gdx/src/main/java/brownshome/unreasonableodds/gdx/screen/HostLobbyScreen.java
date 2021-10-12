@@ -16,11 +16,13 @@ public class HostLobbyScreen extends LobbyScreen {
 		startGameButton.addListener(new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
+				disposeSession(false);
+
+				var startingScreen = new StartingGameScreen(resources);
+				nextScreen(startingScreen);
+
 				session.startGame(new GdxRules(resources))
-						.thenAccept(multiverse -> {
-							disposeSession(false);
-							nextScreen(new MultiverseScreen(resources, multiverse, player()));
-						});
+						.thenAccept(multiverse -> startingScreen.nextScreen(new MultiverseScreen(resources, multiverse, player())));
 			}
 		});
 

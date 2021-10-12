@@ -2,6 +2,8 @@ package brownshome.unreasonableodds.session;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -16,6 +18,11 @@ import brownshome.unreasonableodds.session.net.SendPlayersPacket;
  */
 public class HostSession extends UDPSession {
 	private static final System.Logger LOGGER = System.getLogger(HostSession.class.getModule().getName());
+
+	public static HostSession getHost() {
+		return (HostSession) Session.getHost();
+	}
+
 	private final Map<InetSocketAddress, UDPSessionPlayer> players;
 
 	public HostSession(String name, int port, Executor executor) throws IOException {
@@ -28,15 +35,27 @@ public class HostSession extends UDPSession {
 
 	public CompletableFuture<Multiverse> startGame(Rules rules) {
 		// Re-negotiate the schema to the game schema
-		var schemas = gameSchema();
+		var startTime = CompletableFuture.allOf(players.values()
+				.stream().map(UDPSessionPlayer::timeOffset).toArray(CompletableFuture[]::new))
+				.thenApply(v -> rules.gameStartTime());
 
-		List<CompletableFuture<Void>> renegotiateFutures = new ArrayList<>();
-		for (var address : players.keySet()) {
-			renegotiateFutures.add(connectionManager().getOrCreateConnection(address).connect(schemas));
+		for (var player : players.values()) {
+			// Wait for the sync send and then receive
+			/*
+			 * TODO james.brown [12-10-2021] Retry the time-sync system if the packets fail to send. This will need
+			 *                               sequence numbers of some sort to reject 'slow' time-sync packets that are
+			 *                               out of date.
+			 */
+
+			player.startTimeSync();
+			startTime.thenAccept(player::startGame);
 		}
 
-		return CompletableFuture.allOf(renegotiateFutures.toArray(CompletableFuture[]::new))
-				.thenApply(unused -> rules.createMultiverse(createPlayers()));
+		return startTime.thenApply(s -> rules.createNetworkedMultiverse(new ArrayList<>(players.values()), s));
+	}
+
+	public void completeTimeSync(InetSocketAddress address, Instant remoteTime) {
+		players.get(address).completeTimeSync(remoteTime);
 	}
 
 	protected List<Player> createPlayers() {
@@ -55,7 +74,7 @@ public class HostSession extends UDPSession {
 				existing.name(name);
 				return existing;
 			} else {
-				return UDPSessionPlayer.makeClient(name);
+				return UDPSessionPlayer.makeClient(name, connectionManager().getOrCreateConnection(a));
 			}
 		});
 

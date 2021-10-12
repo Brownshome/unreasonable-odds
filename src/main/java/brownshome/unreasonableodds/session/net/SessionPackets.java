@@ -8,10 +8,10 @@ import brownshome.netcode.annotation.converter.UseConverter;
 import brownshome.netcode.udp.UDPConnection;
 import brownshome.unreasonableodds.session.*;
 
-final class Packets {
-	private static final System.Logger LOGGER = System.getLogger(Packets.class.getModule().toString());
+final class SessionPackets {
+	private static final System.Logger LOGGER = System.getLogger(SessionPackets.class.getModule().toString());
 
-	private Packets() { }
+	private SessionPackets() { }
 
 	/**
 	 * Sets the name of a player, creating the player if it does not exist
@@ -24,7 +24,7 @@ final class Packets {
 	static void setName(@ConnectionParam Connection<?> connection, String name) {
 		LOGGER.log(System.Logger.Level.TRACE, () -> "Set the name of %s to %s".formatted(connection.address(), name));
 
-		var session = (HostSession) Session.getHost();
+		var session = HostSession.getHost();
 		var udpConnection = (UDPConnection) connection;
 
 		session.setPlayerName(udpConnection.address(), name);
@@ -41,7 +41,7 @@ final class Packets {
 	static void setReadyState(@ConnectionParam Connection<?> connection, boolean ready) {
 		LOGGER.log(System.Logger.Level.TRACE, () -> "Set the ready state of %s to %s".formatted(connection.address(), ready));
 
-		var session = (HostSession) Session.getHost();
+		var session = HostSession.getHost();
 		var udpConnection = (UDPConnection) connection;
 
 		session.setReadyState(udpConnection.address(), ready);
@@ -57,7 +57,7 @@ final class Packets {
 	static void setClientNames(@UseConverter(SessionPlayerConverter.class) List<SessionPlayer> players) {
 		LOGGER.log(System.Logger.Level.TRACE, () -> "Received client name list %s".formatted(players));
 
-		var session = (ClientSession) Session.getHost();
+		var session = ClientSession.getHost();
 		session.players(players);
 	}
 

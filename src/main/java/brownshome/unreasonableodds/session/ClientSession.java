@@ -2,6 +2,7 @@ package brownshome.unreasonableodds.session;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -13,6 +14,10 @@ import brownshome.unreasonableodds.session.net.*;
  * Represents a client game that connects to a hosted game
  */
 public class ClientSession extends UDPSession {
+	public static ClientSession getHost() {
+		return (ClientSession) Session.getHost();
+	}
+
 	private final UDPConnection connection;
 
 	private List<SessionPlayer> players;
@@ -66,5 +71,9 @@ public class ClientSession extends UDPSession {
 	 */
 	public void hostLeft() {
 		/* Do nothing as the host will close the connection from its end */
+	}
+
+	public void startGame(Instant startTime) {
+
 	}
 }
