@@ -2,13 +2,12 @@ package brownshome.unreasonableodds.gdx.entities;
 
 import java.time.Duration;
 
-import brownshome.unreasonableodds.Universe;
+import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.entites.Character;
 import brownshome.unreasonableodds.gdx.*;
 import brownshome.vecmath.MVec2;
 import brownshome.vecmath.Vec2;
 
-import brownshome.unreasonableodds.Player;
 import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.entites.*;
 
@@ -18,7 +17,7 @@ import com.badlogic.gdx.math.Affine2;
 
 public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 	private static final TextureRegionCache REGION_CACHE = new TextureRegionCache("character");
-	private static final Vec2 SIZE = Vec2.of(0.1, 0.1);
+	private static final Vec2 SIZE = Vec2.of(CHARACTER_RADIUS * 2, CHARACTER_RADIUS * 2);
 
 	private final RenderComponent renderComponent;
 
@@ -48,8 +47,8 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 	}
 
 	@Override
-	protected JumpScar createJumpScar(Vec2 position, Duration jumpScarDuration) {
-		return new GdxJumpScar(position, jumpScarDuration, renderComponent.resources());
+	public GdxHistoricalCharacter createHistoricalEntity(Rules rules) {
+		return ((GdxEntityFactory) rules.entities()).createHistoricalCharacter(position(), velocity(), renderComponent);
 	}
 
 	@Override
@@ -72,11 +71,6 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 	@Override
 	protected Character withVelocity(Vec2 velocity) {
 		return new GdxPlayerCharacter(position(), velocity, player(), timeTravelEnergy(), renderComponent);
-	}
-
-	@Override
-	protected HistoricalCharacter createHistoricalCharacter() {
-		return new GdxHistoricalCharacter(position(), velocity(), renderComponent);
 	}
 
 	@Override

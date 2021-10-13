@@ -99,7 +99,7 @@ public abstract class Character extends Entity implements Positioned, Collidable
 		 * Jumps the character out of this universe.
 		 */
 		protected final void jumpOutOfUniverse() {
-			createJumpScar(position().position(), step.rules().jumpScarDuration()).addToBuilder(step.builder());
+			rules().entities().createJumpScar(position().position(), step.rules().jumpScarDuration()).addToBuilder(step.builder());
 			setNext(null);
 		}
 
@@ -235,16 +235,6 @@ public abstract class Character extends Entity implements Positioned, Collidable
 
 		move.add(preMoveEntity.position.position());
 		return preMoveEntity.withPosition(new Position(move, preMoveEntity.position.orientation())).withVelocity(velocity);
-	}
-
-	/**
-	 * Creates a jump scar at the given position and with the given duration remaining
-	 * @param position the position to create the jump scar
-	 * @param jumpScarDuration the duration remaining of the jump scar
-	 * @return the jump scar
-	 */
-	protected JumpScar createJumpScar(Vec2 position, Duration jumpScarDuration) {
-		return new JumpScar(position, jumpScarDuration);
 	}
 
 	/**

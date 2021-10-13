@@ -17,7 +17,7 @@ public abstract class Session implements AutoCloseable {
 		THREAD_SESSION.set(this);
 	}
 
-	protected String name = "";
+	private String name = "";
 
 	protected Session(String name) {
 		this.name = name;

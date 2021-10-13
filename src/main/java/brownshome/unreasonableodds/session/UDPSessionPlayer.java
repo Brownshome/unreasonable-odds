@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 
 import brownshome.netcode.udp.UDPConnection;
+import brownshome.unreasonableodds.Rules;
 import brownshome.unreasonableodds.net.StartGamePacket;
 import brownshome.unreasonableodds.session.net.RequestTimeSyncPacket;
 import brownshome.unreasonableodds.session.net.TimeSyncPacket;
@@ -68,8 +69,8 @@ public final class UDPSessionPlayer extends SessionPlayer {
 		 */
 	}
 
-	public void startGame(Instant timeToStart) {
+	public void startGame(Instant timeToStart, Rules rules) {
 		connection.connect(UDPSession.gameSchema());
-		connection.send(new StartGamePacket(timeToStart.plus(timeOffset.getNow(null))));
+		connection.send(new StartGamePacket(timeToStart.plus(timeOffset.getNow(null)), rules));
 	}
 }

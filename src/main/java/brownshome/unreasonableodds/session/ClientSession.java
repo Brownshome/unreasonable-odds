@@ -8,12 +8,16 @@ import java.util.List;
 import java.util.concurrent.Executor;
 
 import brownshome.netcode.udp.*;
+import brownshome.unreasonableodds.Rules;
 import brownshome.unreasonableodds.session.net.*;
 
 /**
- * Represents a client game that connects to a hosted game
+ * Represents a client game that connects to a hosted game.
+ *
+ * Additionally, the classloader that loads the client session class that calls {@link Session#markThreadAsSessionThread()}
+ * will be used to load the rules objects.
  */
-public class ClientSession extends UDPSession {
+public abstract class ClientSession extends UDPSession {
 	public static ClientSession getHost() {
 		return (ClientSession) Session.getHost();
 	}
@@ -23,7 +27,7 @@ public class ClientSession extends UDPSession {
 	private List<SessionPlayer> players;
 	private boolean isReady;
 
-	public ClientSession(String name, InetSocketAddress address, Executor executor) throws IOException {
+	protected ClientSession(String name, InetSocketAddress address, Executor executor) throws IOException {
 		super(name, new UDPConnectionManager(allSchema()), executor);
 
 		this.players = new ArrayList<>();
@@ -73,7 +77,5 @@ public class ClientSession extends UDPSession {
 		/* Do nothing as the host will close the connection from its end */
 	}
 
-	public void startGame(Instant startTime) {
-
-	}
+	public abstract void startGame(Rules rules, Instant startTime);
 }

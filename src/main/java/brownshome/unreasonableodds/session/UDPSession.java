@@ -24,7 +24,10 @@ abstract class UDPSession extends Session {
 	}
 
 	protected static List<Schema> gameSchema() {
-		return List.of(new BaseSchema(), new GameSchema());
+		/*
+		 * TODO james.brown [13-10-2021] Move the lobby specific schema into its own schema
+		 */
+		return List.of(new BaseSchema(), new SessionSchema(), new GameSchema());
 	}
 
 	protected static List<Schema> allSchema() {

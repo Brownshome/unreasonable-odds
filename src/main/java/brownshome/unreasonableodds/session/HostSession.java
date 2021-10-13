@@ -48,10 +48,10 @@ public class HostSession extends UDPSession {
 			 */
 
 			player.startTimeSync();
-			startTime.thenAccept(player::startGame);
+			startTime.thenAccept(s -> player.startGame(s, rules));
 		}
 
-		return startTime.thenApply(s -> rules.createNetworkedMultiverse(new ArrayList<>(players.values()), s));
+		return startTime.thenApply(s -> rules.createMultiverse(createPlayers(), new MultiverseNetwork(), s));
 	}
 
 	public void completeTimeSync(InetSocketAddress address, Instant remoteTime) {
@@ -113,7 +113,7 @@ public class HostSession extends UDPSession {
 	@Override
 	public List<SessionPlayer> players() {
 		var result = new ArrayList<SessionPlayer>(players.values());
-		result.add(UDPSessionPlayer.makeHost(name));
+		result.add(UDPSessionPlayer.makeHost(name()));
 		result.sort(null);
 
 		return result;

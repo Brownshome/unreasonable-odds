@@ -50,10 +50,10 @@ public class Universe implements Comparable<Universe> {
 		return collisionDetector;
 	}
 
-	public Universe createHistoricalUniverse() {
+	public Universe createHistoricalUniverse(Rules rules) {
 		Builder builder = newBranchBuilder();
 		for (var e : entities) {
-			var historical = e.createHistoricalEntity();
+			var historical = e.createHistoricalEntity(rules);
 
 			if (historical != null) {
 				historical.addToBuilder(builder);

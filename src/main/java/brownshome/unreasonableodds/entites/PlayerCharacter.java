@@ -4,8 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
 
-import brownshome.unreasonableodds.Player;
-import brownshome.unreasonableodds.Universe;
+import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.components.Position;
 import brownshome.vecmath.Vec2;
 
@@ -22,10 +21,6 @@ public class PlayerCharacter extends Character {
 
 		this.player = player;
 		this.timeTravelEnergy = timeTravelEnergy;
-	}
-
-	public static PlayerCharacter createCharacter(Position position, Vec2 velocity, Player player, Duration timeTravelEnergy) {
-		return new PlayerCharacter(position, velocity, player, timeTravelEnergy);
 	}
 
 	public Player player() {
@@ -125,8 +120,8 @@ public class PlayerCharacter extends Character {
 	}
 
 	@Override
-	public HistoricalCharacter createHistoricalEntity() {
-		return createHistoricalCharacter();
+	public HistoricalCharacter createHistoricalEntity(Rules rules) {
+		return rules.entities().createHistoricalCharacter(position(), velocity());
 	}
 
 	protected PlayerCharacter withTimeTravelEnergy(Duration energy) {
@@ -141,9 +136,5 @@ public class PlayerCharacter extends Character {
 	@Override
 	protected Character withVelocity(Vec2 velocity) {
 		return new PlayerCharacter(position(), velocity, player, timeTravelEnergy);
-	}
-
-	protected HistoricalCharacter createHistoricalCharacter() {
-		return new HistoricalCharacter(position(), velocity());
 	}
 }

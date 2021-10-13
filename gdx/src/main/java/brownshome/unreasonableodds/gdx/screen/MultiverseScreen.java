@@ -5,6 +5,7 @@ import java.util.List;
 
 import brownshome.unreasonableodds.Multiverse;
 import brownshome.unreasonableodds.gdx.*;
+import brownshome.unreasonableodds.session.Session;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
@@ -97,10 +98,16 @@ public class MultiverseScreen extends SubScreen {
 	public void resume() { }
 
 	@Override
-	public void hide() { }
+	public void hide() {
+		dispose();
+	}
 
 	@Override
-	public void dispose() {	}
+	public void dispose() {
+		if (Session.getHost() != null) {
+			Session.getHost().close();
+		}
+	}
 
 	@Override
 	public boolean keyDown(int keycode) {

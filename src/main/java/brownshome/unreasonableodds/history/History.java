@@ -64,10 +64,10 @@ public final class History {
 				assert past != null : "Time must not be before the earliest entry in the history";
 
 				if (pastDistance.isZero()) {
-					return past.createHistoricalUniverse();
+					return past.createHistoricalUniverse(multiverse.rules());
 				}
 
-				return multiverse.stepDisconnectedUniverse(past.createHistoricalUniverse(), pastDistance);
+				return multiverse.stepDisconnectedUniverse(past.createHistoricalUniverse(multiverse.rules()), pastDistance);
 			}
 
 			past = future;
@@ -76,7 +76,7 @@ public final class History {
 
 		assert past.now().equals(when) : "The time must not be greater than the latest entry in the history";
 
-		return past.createHistoricalUniverse();
+		return past.createHistoricalUniverse(multiverse.rules());
 	}
 
 	/**

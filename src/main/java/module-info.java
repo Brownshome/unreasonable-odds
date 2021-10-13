@@ -13,8 +13,6 @@ module brownshome.unreasonableodds {
 
 	requires transitive brownshome.vecmath;
 
-	requires static brownshome.netcode.annotation;
-
 	requires brownshome.netcode;
 
 	// Reflection access to schema names

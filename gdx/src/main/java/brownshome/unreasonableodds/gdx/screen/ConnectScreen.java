@@ -3,10 +3,15 @@ package brownshome.unreasonableodds.gdx.screen;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.time.Instant;
 import java.util.List;
 
 import browngu.logging.Logger;
+import brownshome.unreasonableodds.MultiverseNetwork;
+import brownshome.unreasonableodds.Rules;
 import brownshome.unreasonableodds.gdx.ApplicationResources;
+import brownshome.unreasonableodds.gdx.GdxRules;
+import brownshome.unreasonableodds.gdx.session.GdxSession;
 import brownshome.unreasonableodds.session.ClientSession;
 import brownshome.unreasonableodds.session.SessionPlayer;
 import com.badlogic.gdx.Gdx;
@@ -34,10 +39,13 @@ public class ConnectScreen extends StageScreen {
 			public void changed(ChangeEvent event, Actor actor) {
 				if (connect.isPressed()) {
 					try {
-						var session = new ClientSession(name.getText(), new InetSocketAddress(address.getText(), Integer.decode(port.getText())), Gdx.app::postRunnable) {
+						class GdxClientSession extends ClientSession implements GdxSession {
 							final ClientLobbyScreen ui = new ClientLobbyScreen(resources, this);
 
-							{ markThreadAsSessionThread(); }
+							GdxClientSession() throws IOException {
+								super(name.getText(), new InetSocketAddress(address.getText(), Integer.decode(port.getText())), Gdx.app::postRunnable);
+								markThreadAsSessionThread();
+							}
 
 							@Override
 							public void players(List<SessionPlayer> players) {
@@ -50,7 +58,23 @@ public class ConnectScreen extends StageScreen {
 								super.hostLeft();
 								ui.nextScreen(new TopMenuScreen(resources));
 							}
-						};
+
+							@Override
+							public void startGame(Rules rules, Instant startTime) {
+								assert rules instanceof GdxRules;
+
+								var multiverse = rules.createMultiverse(List.of(ui.player()), new MultiverseNetwork(), startTime);
+
+								ui.disposeSession(false);
+								ui.nextScreen(new MultiverseScreen(resources, multiverse, ui.player()));
+							}
+
+							@Override
+							public ApplicationResources applicationResources() {
+								return resources;
+							}
+						}
+						var session = new GdxClientSession();
 
 						nextScreen(session.ui);
 					} catch (IOException | NumberFormatException | SecurityException e) {

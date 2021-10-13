@@ -1,16 +1,15 @@
 package brownshome.unreasonableodds;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 
+import brownshome.netcode.NetworkUtils;
 import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.entites.*;
 import brownshome.unreasonableodds.generation.FloorTileGenerator;
 import brownshome.unreasonableodds.generation.TileType;
-import brownshome.unreasonableodds.session.UDPSessionPlayer;
-import brownshome.unreasonableodds.tile.ClosedTile;
 import brownshome.unreasonableodds.tile.Tile;
 import brownshome.vecmath.Rot2;
 import brownshome.vecmath.Vec2;
@@ -19,7 +18,15 @@ import brownshome.vecmath.Vec2;
  * A collection of rules for the game
  */
 public abstract class Rules {
-	private final Instant epoch = Instant.now();
+	private final EntityFactory entityFactory;
+
+	protected Rules(EntityFactory entityFactory) {
+		this.entityFactory = entityFactory;
+	}
+
+	public final EntityFactory entities() {
+		return entityFactory;
+	}
 
 	/**
 	 * The amount of time-energy taken to jump between two universes next to each-other
@@ -40,6 +47,16 @@ public abstract class Rules {
 	protected Duration initialJumpEnergy() {
 		return Duration.ZERO;
 	}
+
+	public double energyGainRate() {
+		return 1.0;
+	}
+
+	public Instant gameStartTime() {
+		return Instant.now().plusSeconds(5);
+	}
+
+	// *************** GENERATION ***************** //
 
 	protected abstract TileType[][] createArchetype();
 
@@ -64,39 +81,41 @@ public abstract class Rules {
 			}
 		}
 
-		return StaticMap.createStaticMap(tiles);
+		return entities().createStaticMap(tiles);
 	}
 
-	public Multiverse createNetworkedMultiverse(Collection<UDPSessionPlayer> players, Instant startTime) {
-		return createMultiverse(players.stream().map(UDPSessionPlayer::networkPlayer).collect(Collectors.toList()), new Random());
+	protected Position createSpawnPosition(Random random) {
+		return new Position(Vec2.of(random.nextDouble(), random.nextDouble()), Rot2.IDENTITY);
 	}
+
+	// *************** CREATE MULTIVERSE ***************** //
 
 	public Multiverse createMultiverse(Collection<Player> players) {
-		return createMultiverse(players, new Random());
+		return createMultiverse(players, null, gameStartTime(), new Random());
 	}
 
-	protected Multiverse createMultiverse(Collection<Player> players, Random random) {
+	public Multiverse createMultiverse(Collection<Player> players, MultiverseNetwork network, Instant epoch) {
+		return createMultiverse(players, network, epoch, new Random());
+	}
+
+	protected Multiverse createMultiverse(Collection<Player> players, MultiverseNetwork network, Instant epoch, Random random) {
 		var initialEntities = new ArrayList<Entity>();
 
 		for (var player : players) {
-			initialEntities.add(createPlayerCharacter(createSpawnPosition(random), player, initialJumpEnergy()));
+			initialEntities.add(entities().createPlayerCharacter(createSpawnPosition(random), Vec2.ZERO, player, initialJumpEnergy()));
 		}
 
 		initialEntities.add(generateStaticMap(random));
 
-		return createMultiverse(createUniverse(initialEntities));
+		return createMultiverse(List.of(createUniverse(initialEntities, epoch)), network);
 	}
 
-	protected Multiverse createMultiverse(Universe baseUniverse) {
-		return Multiverse.createMultiverse(this, List.of(baseUniverse));
+	protected Multiverse createMultiverse(List<Universe> universes, MultiverseNetwork network) {
+		return new Multiverse(this, universes, network);
 	}
 
-	protected Universe.Builder universeBuilder() {
-		return Universe.createEmptyUniverse(epoch()).builder(Duration.ZERO);
-	}
-
-	protected final Universe createUniverse(List<Entity> initialEntities) {
-		var builder = universeBuilder();
+	protected Universe createUniverse(List<Entity> initialEntities, Instant epoch) {
+		var builder = universeBuilder(epoch);
 
 		for (Entity e : initialEntities) {
 			e.addToBuilder(builder);
@@ -105,27 +124,25 @@ public abstract class Rules {
 		return builder.build();
 	}
 
+	protected Universe.Builder universeBuilder(Instant epoch) {
+		return Universe.createEmptyUniverse(epoch).builder(Duration.ZERO);
+	}
+
+	// *************** NETWORKING ***************** //
+
+	public void write(ByteBuffer buffer) {
+		NetworkUtils.writeString(buffer, networkClassName());
+	}
+
 	/**
-	 * The time the multiverse will have been created at
-	 * @return the time of creation
+	 * Returns the amount of data required to represent this rules object
+	 * @return the size in bytes (this may be an overestimate)
 	 */
-	public Instant epoch() {
-		return epoch;
+	public int size() {
+		return NetworkUtils.calculateSize(networkClassName()).size();
 	}
 
-	protected PlayerCharacter createPlayerCharacter(Position position, Player player, Duration timeTravelEnergy) {
-		return PlayerCharacter.createCharacter(position, Vec2.ZERO, player, timeTravelEnergy);
-	}
-
-	protected Position createSpawnPosition(Random random) {
-		return new Position(Vec2.of(random.nextDouble(), random.nextDouble()), Rot2.IDENTITY);
-	}
-
-	public double energyGainRate() {
-		return 1.0;
-	}
-
-	public Instant gameStartTime() {
-		return Instant.now().plusSeconds(5);
+	public String networkClassName() {
+		return getClass().getName();
 	}
 }

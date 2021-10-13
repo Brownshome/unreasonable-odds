@@ -1,5 +1,6 @@
 package brownshome.unreasonableodds.entites;
 
+import brownshome.unreasonableodds.Rules;
 import brownshome.unreasonableodds.Universe;
 
 /**
@@ -15,7 +16,7 @@ public abstract class Entity {
 		return this;
 	}
 
-	public Entity createHistoricalEntity() {
+	public Entity createHistoricalEntity(Rules rules) {
 		return this;
 	}
 

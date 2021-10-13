@@ -27,10 +27,6 @@ public class StaticMap extends Entity {
 		walls.add(new AABBCollisionShape(Vec2.of(Double.NEGATIVE_INFINITY, 1.0), Vec2.of(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY)));
 	}
 
-	public static StaticMap createStaticMap(List<Tile> tiles) {
-		return new StaticMap(tiles);
-	}
-
 	protected final List<Tile> tiles() {
 		return tiles;
 	}

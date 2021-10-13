@@ -10,19 +10,38 @@ import brownshome.unreasonableodds.entites.Entity;
  */
 public class Multiverse {
 	private final Rules rules;
+	private final MultiverseNetwork network;
+
 	private List<Universe> universes;
 
-	protected Multiverse(Rules rules, List<Universe> universes) {
+	protected Multiverse(Rules rules, List<Universe> universes, MultiverseNetwork network) {
+		assert rules != null;
+		assert universes != null;
+
 		this.rules = rules;
 		this.universes = universes;
-	}
-
-	public static Multiverse createMultiverse(Rules rules, List<Universe> universes) {
-		return new Multiverse(rules, universes);
+		this.network = network;
 	}
 
 	public final List<Universe> universes() {
 		return universes;
+	}
+
+	/**
+	 * The rules of this game
+	 * @return the rules
+	 */
+	public final Rules rules() {
+		return rules;
+	}
+
+	protected final MultiverseNetwork network() {
+		assert isNetworked();
+		return network;
+	}
+
+	protected final boolean isNetworked() {
+		return network != null;
 	}
 
 	/**
@@ -150,14 +169,6 @@ public class Multiverse {
 		}
 
 		universes = newUniverses;
-	}
-
-	/**
-	 * The rules of this game
-	 * @return the rules
-	 */
-	public final Rules rules() {
-		return rules;
 	}
 
 	/**
