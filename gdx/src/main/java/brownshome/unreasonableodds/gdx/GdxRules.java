@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.Random;
 
 import brownshome.unreasonableodds.Rules;
+import brownshome.unreasonableodds.Universe;
 import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.gdx.entities.GdxEntityFactory;
 import brownshome.unreasonableodds.gdx.generation.GdxClosedTileType;
@@ -29,8 +30,8 @@ public final class GdxRules extends Rules {
 	}
 
 	@Override
-	protected GdxUniverse.Builder universeBuilder(Instant epoch) {
-		return (GdxUniverse.Builder) GdxUniverse.createEmptyUniverse(epoch, resources).builder(Duration.ZERO);
+	protected GdxUniverse.Builder universeBuilder(Universe.Id id, Instant epoch) {
+		return (GdxUniverse.Builder) GdxUniverse.createEmptyUniverse(id, epoch, resources).builder(Duration.ZERO);
 	}
 
 	@Override

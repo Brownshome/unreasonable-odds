@@ -1,5 +1,6 @@
 package brownshome.unreasonableodds;
 
+import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -9,6 +10,7 @@ import brownshome.unreasonableodds.components.Collidable;
 import brownshome.unreasonableodds.entites.Entity;
 import brownshome.unreasonableodds.history.BranchRecord;
 import brownshome.unreasonableodds.history.History;
+import brownshome.unreasonableodds.network.Session;
 
 /**
  * A single universe in the multiverse. This is an immutable object. The ordering of universes is based on the times that
@@ -21,8 +23,14 @@ public class Universe implements Comparable<Universe> {
 
 	private final History history;
 	private final BranchRecord branchRecord;
+	private final Id id;
 
-	protected Universe(Instant now, List<Entity> entities, History previousHistory, BranchRecord branchRecord, CollisionDetector collisionDetector) {
+	public record Id(InetSocketAddress creator, int number) {
+		public static final Id DISCONNECTED = null;
+	}
+
+	protected Universe(Id id, Instant now, List<Entity> entities, History previousHistory, BranchRecord branchRecord, CollisionDetector collisionDetector) {
+		this.id = id;
 		this.now = now;
 		this.entities = entities;
 		this.history = previousHistory.expandHistory(this);
@@ -30,8 +38,12 @@ public class Universe implements Comparable<Universe> {
 		this.collisionDetector = collisionDetector;
 	}
 
-	public static Universe createEmptyUniverse(Instant epoch) {
-		return new Universe(epoch, Collections.emptyList(), History.blankHistory(), BranchRecord.blankRecord(epoch), CollisionDetector.createDetector());
+	public static Universe createEmptyUniverse(Id id, Instant epoch) {
+		return new Universe(id, epoch, Collections.emptyList(), History.blankHistory(), BranchRecord.blankRecord(epoch), CollisionDetector.createDetector());
+	}
+
+	public final Id id() {
+		return id;
 	}
 
 	/**
@@ -135,7 +147,7 @@ public class Universe implements Comparable<Universe> {
 		 * @return the new universe
 		 */
 		public Universe build() {
-			return new Universe(now, entities, history, branchRecord, collisionDetector());
+			return new Universe(id, now, entities, history, branchRecord, collisionDetector());
 		}
 	}
 
@@ -219,6 +231,25 @@ public class Universe implements Comparable<Universe> {
 	 * @return a universe step that can be used to further interact with the newly created universe
 	 */
 	public UniverseStep step(Multiverse.MultiverseStep multiverseStep) {
+		return step(id(), multiverseStep);
+	}
+
+	/**
+	 * Steps this universe forward within the context of a parent multiverse step, allocating it a new ID
+	 * @param multiverseStep the step
+	 * @return a universe step that can be used to further interact with the newly created universe
+	 */
+	public UniverseStep stepNew(Multiverse.MultiverseStep multiverseStep) {
+		return step(multiverseStep.multiverse().allocateUniverseId(), multiverseStep);
+	}
+
+	/**
+	 * Steps this universe forward within the context of a parent multiverse step
+	 * @param id the ID of the new universe
+	 * @param multiverseStep the step
+	 * @return a universe step that can be used to further interact with the newly created universe
+	 */
+	protected UniverseStep step(Id id, Multiverse.MultiverseStep multiverseStep) {
 		var step = new UniverseStep(multiverseStep);
 
 		for (var s : entities) {

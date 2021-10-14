@@ -1,8 +1,7 @@
 package brownshome.unreasonableodds.gdx.screen;
 
 import brownshome.unreasonableodds.gdx.*;
-import brownshome.unreasonableodds.session.ClientSession;
-import com.badlogic.gdx.Screen;
+import brownshome.unreasonableodds.network.ClientSession;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;

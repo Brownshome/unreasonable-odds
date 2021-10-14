@@ -1,7 +1,7 @@
 package brownshome.unreasonableodds.gdx.session;
 
 import brownshome.unreasonableodds.gdx.ApplicationResources;
-import brownshome.unreasonableodds.session.Session;
+import brownshome.unreasonableodds.network.Session;
 
 public interface GdxSession {
 	static GdxSession getHost() {

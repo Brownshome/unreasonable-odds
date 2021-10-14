@@ -1,4 +1,4 @@
-package brownshome.unreasonableodds.session.net;
+package brownshome.unreasonableodds.network.packets;
 
 import java.util.List;
 
@@ -6,7 +6,8 @@ import brownshome.netcode.Connection;
 import brownshome.netcode.annotation.*;
 import brownshome.netcode.annotation.converter.UseConverter;
 import brownshome.netcode.udp.UDPConnection;
-import brownshome.unreasonableodds.session.*;
+import brownshome.unreasonableodds.network.*;
+import brownshome.unreasonableodds.packets.converters.SessionPlayerConverter;
 
 final class SessionPackets {
 	private static final System.Logger LOGGER = System.getLogger(SessionPackets.class.getModule().toString());

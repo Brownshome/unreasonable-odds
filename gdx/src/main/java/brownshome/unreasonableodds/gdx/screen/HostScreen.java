@@ -1,13 +1,12 @@
 package brownshome.unreasonableodds.gdx.screen;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.List;
 
 import brownshome.unreasonableodds.Player;
 import brownshome.unreasonableodds.gdx.ApplicationResources;
-import brownshome.unreasonableodds.session.HostSession;
+import brownshome.unreasonableodds.network.HostSession;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.*;

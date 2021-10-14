@@ -1,4 +1,4 @@
-package brownshome.unreasonableodds.session;
+package brownshome.unreasonableodds.network;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -6,9 +6,8 @@ import java.util.concurrent.CompletableFuture;
 
 import brownshome.netcode.udp.UDPConnection;
 import brownshome.unreasonableodds.Rules;
-import brownshome.unreasonableodds.net.StartGamePacket;
-import brownshome.unreasonableodds.session.net.RequestTimeSyncPacket;
-import brownshome.unreasonableodds.session.net.TimeSyncPacket;
+import brownshome.unreasonableodds.network.packets.RequestTimeSyncPacket;
+import brownshome.unreasonableodds.packets.StartGamePacket;
 
 public final class UDPSessionPlayer extends SessionPlayer {
 	private final NetworkControlledPlayer networkPlayer;

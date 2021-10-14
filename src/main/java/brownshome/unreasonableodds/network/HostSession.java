@@ -1,8 +1,7 @@
-package brownshome.unreasonableodds.session;
+package brownshome.unreasonableodds.network;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -10,8 +9,9 @@ import java.util.concurrent.Executor;
 
 import brownshome.netcode.udp.UDPConnectionManager;
 import brownshome.unreasonableodds.*;
-import brownshome.unreasonableodds.session.net.LeaveSessionPacket;
-import brownshome.unreasonableodds.session.net.SendPlayersPacket;
+import brownshome.unreasonableodds.network.packets.LeaveSessionPacket;
+import brownshome.unreasonableodds.network.packets.SendPlayersPacket;
+import brownshome.unreasonableodds.packets.SetUniverseHostPacket;
 
 /**
  * Represents a hosted game that other people can connect to
@@ -33,13 +33,18 @@ public class HostSession extends UDPSession {
 		this.players = new HashMap<>();
 	}
 
-	public CompletableFuture<Multiverse> startGame(Rules rules) {
+	public CompletableFuture<Multiverse> startGame(Rules rules, Random random) {
 		// Re-negotiate the schema to the game schema
 		var startTime = CompletableFuture.allOf(players.values()
 				.stream().map(UDPSessionPlayer::timeOffset).toArray(CompletableFuture[]::new))
 				.thenApply(v -> rules.gameStartTime());
 
-		for (var player : players.values()) {
+		var networkBuilder = new MultiverseNetwork.Builder(this);
+
+		for (var e : players.entrySet()) {
+			var player = e.getValue();
+			var address = e.getKey();
+
 			// Wait for the sync send and then receive
 			/*
 			 * TODO james.brown [12-10-2021] Retry the time-sync system if the packets fail to send. This will need
@@ -49,9 +54,11 @@ public class HostSession extends UDPSession {
 
 			player.startTimeSync();
 			startTime.thenAccept(s -> player.startGame(s, rules));
+			networkBuilder.addRemotePlayer(address, new PlayerCharacterNetwork(connectionManager().getOrCreateConnection(address)));
 		}
 
-		return startTime.thenApply(s -> rules.createMultiverse(createPlayers(), new MultiverseNetwork(), s));
+		var network = new MultiverseNetwork.Builder(this).build();
+		return startTime.thenApply(s -> rules.createMultiverse(createPlayers(), network, s, random));
 	}
 
 	public void completeTimeSync(InetSocketAddress address, Instant remoteTime) {
@@ -59,13 +66,7 @@ public class HostSession extends UDPSession {
 	}
 
 	protected List<Player> createPlayers() {
-		var result = new ArrayList<Player>();
-
-		for (var player : players.values()) {
-			result.add(player.networkPlayer());
-		}
-
-		return result;
+		return new ArrayList<>();
 	}
 
 	public void setPlayerName(InetSocketAddress address, String name) {
@@ -117,6 +118,15 @@ public class HostSession extends UDPSession {
 		result.sort(null);
 
 		return result;
+	}
+
+	@Override
+	public void setUniverseHost(Universe.Id universe, InetSocketAddress address) {
+		super.setUniverseHost(universe, address);
+
+		for (var e : players.entrySet()) {
+			connectionManager().getOrCreateConnection(e.getKey()).send(new SetUniverseHostPacket(universe, address));
+		}
 	}
 
 	@Override

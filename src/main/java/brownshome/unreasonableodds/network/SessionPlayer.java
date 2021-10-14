@@ -1,4 +1,4 @@
-package brownshome.unreasonableodds.session;
+package brownshome.unreasonableodds.network;
 
 import java.util.Objects;
 

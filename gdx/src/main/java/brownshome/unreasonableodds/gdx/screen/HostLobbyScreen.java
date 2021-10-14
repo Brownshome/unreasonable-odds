@@ -1,10 +1,10 @@
 package brownshome.unreasonableodds.gdx.screen;
 
+import java.util.Random;
+
 import brownshome.unreasonableodds.gdx.*;
-import brownshome.unreasonableodds.session.HostSession;
-import com.badlogic.gdx.Gdx;
+import brownshome.unreasonableodds.network.HostSession;
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 
@@ -21,7 +21,7 @@ public class HostLobbyScreen extends LobbyScreen {
 				var startingScreen = new StartingGameScreen(resources);
 				nextScreen(startingScreen);
 
-				session.startGame(new GdxRules(resources))
+				session.startGame(new GdxRules(resources), new Random())
 						.thenAccept(multiverse -> startingScreen.nextScreen(new MultiverseScreen(resources, multiverse, player())));
 			}
 		});

@@ -1,10 +1,10 @@
-package brownshome.unreasonableodds.session.net;
+package brownshome.unreasonableodds.packets.converters;
 
 import java.nio.ByteBuffer;
 
 import brownshome.netcode.NetworkUtils;
 import brownshome.netcode.annotation.converter.Converter;
-import brownshome.unreasonableodds.session.SessionPlayer;
+import brownshome.unreasonableodds.network.SessionPlayer;
 
 public final class SessionPlayerConverter implements Converter<SessionPlayer> {
 	@Override

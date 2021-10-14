@@ -10,6 +10,7 @@ import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.entites.*;
 import brownshome.unreasonableodds.generation.FloorTileGenerator;
 import brownshome.unreasonableodds.generation.TileType;
+import brownshome.unreasonableodds.network.*;
 import brownshome.unreasonableodds.tile.Tile;
 import brownshome.vecmath.Rot2;
 import brownshome.vecmath.Vec2;
@@ -90,32 +91,40 @@ public abstract class Rules {
 
 	// *************** CREATE MULTIVERSE ***************** //
 
-	public Multiverse createMultiverse(Collection<Player> players) {
-		return createMultiverse(players, null, gameStartTime(), new Random());
-	}
+	/**
+	 *
+	 * @param localPlayers players whose actions are controlled by this session, and are hosted in this session
+	 * @param network the network information about this universe
+	 * @param epoch the time that the multiverse comes into existence
+	 * @param random a random number generator used to generate the universe
+	 * @return a new multiverse
+	 */
+	public Multiverse createMultiverse(Collection<Player> localPlayers, MultiverseNetwork network, Instant epoch, Random random) {
+		var map = generateStaticMap(random);
+		var universes = new ArrayList<Universe>();
+		int number = 0;
 
-	public Multiverse createMultiverse(Collection<Player> players, MultiverseNetwork network, Instant epoch) {
-		return createMultiverse(players, network, epoch, new Random());
-	}
-
-	protected Multiverse createMultiverse(Collection<Player> players, MultiverseNetwork network, Instant epoch, Random random) {
-		var initialEntities = new ArrayList<Entity>();
-
-		for (var player : players) {
-			initialEntities.add(entities().createPlayerCharacter(createSpawnPosition(random), Vec2.ZERO, player, initialJumpEnergy()));
+		for (var player : localPlayers) {
+			var character = entities().createPlayerCharacter(createSpawnPosition(random), Vec2.ZERO, player, initialJumpEnergy());
+			universes.add(createUniverse(new Universe.Id(network.address(), number++), List.of(map, character), epoch));
 		}
 
-		initialEntities.add(generateStaticMap(random));
+		if (network != null) {
+			for (var player : network.remotePlayers()) {
+				var character = entities().createPlayerCharacter(createSpawnPosition(random), Vec2.ZERO, initialJumpEnergy(), player);
+				universes.add(createUniverse(new Universe.Id(network.address(), number++), List.of(map, character), epoch));
+			}
+		}
 
-		return createMultiverse(List.of(createUniverse(initialEntities, epoch)), network);
+		return createMultiverse(universes, network);
 	}
 
 	protected Multiverse createMultiverse(List<Universe> universes, MultiverseNetwork network) {
 		return new Multiverse(this, universes, network);
 	}
 
-	protected Universe createUniverse(List<Entity> initialEntities, Instant epoch) {
-		var builder = universeBuilder(epoch);
+	protected Universe createUniverse(Universe.Id id, List<Entity> initialEntities, Instant epoch) {
+		var builder = universeBuilder(id, epoch);
 
 		for (Entity e : initialEntities) {
 			e.addToBuilder(builder);
@@ -124,8 +133,8 @@ public abstract class Rules {
 		return builder.build();
 	}
 
-	protected Universe.Builder universeBuilder(Instant epoch) {
-		return Universe.createEmptyUniverse(epoch).builder(Duration.ZERO);
+	protected Universe.Builder universeBuilder(Universe.Id id, Instant epoch) {
+		return Universe.createEmptyUniverse(id, epoch).builder(Duration.ZERO);
 	}
 
 	// *************** NETWORKING ***************** //

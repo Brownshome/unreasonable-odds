@@ -1,4 +1,4 @@
-package brownshome.unreasonableodds.session.net;
+package brownshome.unreasonableodds.network.packets;
 
 import java.time.Instant;
 
@@ -7,7 +7,8 @@ import brownshome.netcode.annotation.ConnectionParam;
 import brownshome.netcode.annotation.DefinePacket;
 import brownshome.netcode.annotation.converter.UseConverter;
 import brownshome.netcode.udp.UDPConnection;
-import brownshome.unreasonableodds.session.HostSession;
+import brownshome.unreasonableodds.network.HostSession;
+import brownshome.unreasonableodds.packets.converters.InstantConverter;
 
 final class TimeSyncPackets {
 	private TimeSyncPackets() { }

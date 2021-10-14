@@ -6,6 +6,7 @@ import java.util.Set;
 
 import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.components.Position;
+import brownshome.unreasonableodds.network.PlayerCharacterNetwork;
 import brownshome.vecmath.Vec2;
 
 /**
@@ -16,18 +17,34 @@ public class PlayerCharacter extends Character {
 	private final Player player;
 	private final Duration timeTravelEnergy;
 
-	protected PlayerCharacter(Position position, Vec2 velocity, Player player, Duration timeTravelEnergy) {
+	/**
+	 * Holds networking information about the player character
+	 */
+	private final PlayerCharacterNetwork network;
+
+	protected PlayerCharacter(Position position, Vec2 velocity, Player player, Duration timeTravelEnergy, PlayerCharacterNetwork network) {
 		super(position, velocity);
+
+		assert player == null || network == null;
 
 		this.player = player;
 		this.timeTravelEnergy = timeTravelEnergy;
+		this.network = network;
 	}
 
-	public Player player() {
+	protected final boolean isNetworkProxy() {
+		return network != null;
+	}
+
+	protected final PlayerCharacterNetwork network() {
+		return network;
+	}
+
+	protected final Player player() {
 		return player;
 	}
 
-	public Duration timeTravelEnergy() {
+	public final Duration timeTravelEnergy() {
 		return timeTravelEnergy;
 	}
 
@@ -51,7 +68,7 @@ public class PlayerCharacter extends Character {
 
 			var newUniverseStep = step()
 					.timeTravel(instant)
-					.step(step().multiverseStep());
+					.stepNew(step().multiverseStep());
 
 			withTimeTravelEnergy(timeTravelEnergy.minus(distance))
 					.step(newUniverseStep);
@@ -109,14 +126,19 @@ public class PlayerCharacter extends Character {
 
 	@Override
 	protected PlayerCharacter nextEntity(Universe.UniverseStep step) {
-		var next = (PlayerCharacter) super.nextEntity(step);
+		if (isNetworkProxy()) {
+			network.pushUniverse(step.universe());
+			return network.nextPlayer(step);
+		} else {
+			var next = (PlayerCharacter) super.nextEntity(step);
 
-		if (next == null) {
-			return null;
+			if (next == null) {
+				return null;
+			}
+
+			double nanosGained = step.stepSize().toNanos() * step.rules().energyGainRate();
+			return next.withTimeTravelEnergy(next.timeTravelEnergy.plus(Duration.ofNanos((long) nanosGained)));
 		}
-
-		double nanosGained = step.stepSize().toNanos() * step.rules().energyGainRate();
-		return next.withTimeTravelEnergy(next.timeTravelEnergy.plus(Duration.ofNanos((long) nanosGained)));
 	}
 
 	@Override
@@ -125,16 +147,16 @@ public class PlayerCharacter extends Character {
 	}
 
 	protected PlayerCharacter withTimeTravelEnergy(Duration energy) {
-		return new PlayerCharacter(position(), velocity(), player, energy);
+		return new PlayerCharacter(position(), velocity(), player, energy, network);
 	}
 
 	@Override
 	protected PlayerCharacter withPosition(Position position) {
-		return new PlayerCharacter(position, velocity(), player, timeTravelEnergy);
+		return new PlayerCharacter(position, velocity(), player, timeTravelEnergy, network);
 	}
 
 	@Override
 	protected Character withVelocity(Vec2 velocity) {
-		return new PlayerCharacter(position(), velocity, player, timeTravelEnergy);
+		return new PlayerCharacter(position(), velocity, player, timeTravelEnergy, network);
 	}
 }

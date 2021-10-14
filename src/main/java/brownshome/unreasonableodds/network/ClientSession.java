@@ -1,4 +1,4 @@
-package brownshome.unreasonableodds.session;
+package brownshome.unreasonableodds.network;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -7,9 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 
-import brownshome.netcode.udp.*;
+import brownshome.netcode.udp.UDPConnection;
+import brownshome.netcode.udp.UDPConnectionManager;
 import brownshome.unreasonableodds.Rules;
-import brownshome.unreasonableodds.session.net.*;
+import brownshome.unreasonableodds.Universe;
+import brownshome.unreasonableodds.network.packets.*;
+import brownshome.unreasonableodds.packets.SetUniverseHostPacket;
 
 /**
  * Represents a client game that connects to a hosted game.
@@ -78,4 +81,10 @@ public abstract class ClientSession extends UDPSession {
 	}
 
 	public abstract void startGame(Rules rules, Instant startTime);
+
+	@Override
+	public void claimUniverse(Universe.Id universe) {
+		super.claimUniverse(universe);
+		connection.send(new SetUniverseHostPacket(universe, connectionManager().address()));
+	}
 }

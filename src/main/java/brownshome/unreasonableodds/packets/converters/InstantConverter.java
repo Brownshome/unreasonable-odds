@@ -1,11 +1,11 @@
-package brownshome.unreasonableodds.session.net;
+package brownshome.unreasonableodds.packets.converters;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
 
 import brownshome.netcode.annotation.converter.Converter;
 
-public class InstantConverter implements Converter<Instant> {
+public final class InstantConverter implements Converter<Instant> {
 	@Override
 	public void write(ByteBuffer buffer, Instant object) {
 		buffer.putLong(object.getEpochSecond()).putInt(object.getNano());

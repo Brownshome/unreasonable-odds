@@ -5,6 +5,7 @@ import java.util.List;
 
 import brownshome.unreasonableodds.Player;
 import brownshome.unreasonableodds.components.Position;
+import brownshome.unreasonableodds.network.PlayerCharacterNetwork;
 import brownshome.unreasonableodds.tile.Tile;
 import brownshome.vecmath.Vec2;
 
@@ -13,7 +14,11 @@ import brownshome.vecmath.Vec2;
  */
 public class EntityFactory {
 	public PlayerCharacter createPlayerCharacter(Position position, Vec2 velocity, Player player, Duration timeTravelEnergy) {
-		return new PlayerCharacter(position, velocity, player, timeTravelEnergy);
+		return new PlayerCharacter(position, velocity, player, timeTravelEnergy, null);
+	}
+
+	public PlayerCharacter createPlayerCharacter(Position position, Vec2 velocity, Duration timeTravelEnergy, PlayerCharacterNetwork network) {
+		return new PlayerCharacter(position, velocity, null, timeTravelEnergy, network);
 	}
 
 	public HistoricalCharacter createHistoricalCharacter(Position position, Vec2 velocity) {

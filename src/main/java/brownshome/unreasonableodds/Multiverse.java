@@ -2,8 +2,10 @@ package brownshome.unreasonableodds;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import brownshome.unreasonableodds.entites.Entity;
+import brownshome.unreasonableodds.network.MultiverseNetwork;
 
 /**
  * The base class for the game, representing a collection of universes
@@ -11,6 +13,7 @@ import brownshome.unreasonableodds.entites.Entity;
 public class Multiverse {
 	private final Rules rules;
 	private final MultiverseNetwork network;
+	private final AtomicInteger nextUniverseId;
 
 	private List<Universe> universes;
 
@@ -20,7 +23,19 @@ public class Multiverse {
 
 		this.rules = rules;
 		this.universes = universes;
+
+		if (network != null) {
+			for (var universe : universes) {
+				network.registerNewUniverse(universe);
+			}
+		}
+
 		this.network = network;
+		this.nextUniverseId = new AtomicInteger(universes.stream().map(Universe::id).mapToInt(Universe.Id::number).max().orElse(-1) + 1);
+	}
+
+	public final Universe.Id allocateUniverseId() {
+		return new Universe.Id(isNetworked() ? network.address() : null, nextUniverseId.getAndIncrement());
 	}
 
 	public final List<Universe> universes() {
@@ -35,12 +50,12 @@ public class Multiverse {
 		return rules;
 	}
 
-	protected final MultiverseNetwork network() {
+	public final MultiverseNetwork network() {
 		assert isNetworked();
 		return network;
 	}
 
-	protected final boolean isNetworked() {
+	public final boolean isNetworked() {
 		return network != null;
 	}
 
@@ -139,6 +154,10 @@ public class Multiverse {
 		var step = new MultiverseStep(stepSize) {
 			@Override
 			public void addUniverse(Universe universe) {
+				if (isNetworked()) {
+					network.registerNewUniverse(universe);
+				}
+
 				newUniverses.add(universe);
 			}
 

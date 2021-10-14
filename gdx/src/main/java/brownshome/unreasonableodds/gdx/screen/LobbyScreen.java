@@ -2,9 +2,9 @@ package brownshome.unreasonableodds.gdx.screen;
 
 import brownshome.unreasonableodds.gdx.ApplicationResources;
 import brownshome.unreasonableodds.gdx.GdxPlayer;
-import brownshome.unreasonableodds.session.Session;
+import brownshome.unreasonableodds.network.Session;
 
-import brownshome.unreasonableodds.session.SessionPlayer;
+import brownshome.unreasonableodds.network.SessionPlayer;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.ui.*;

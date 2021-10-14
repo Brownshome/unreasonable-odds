@@ -5,15 +5,17 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.List;
+import java.util.Random;
 
 import browngu.logging.Logger;
-import brownshome.unreasonableodds.MultiverseNetwork;
+import brownshome.unreasonableodds.Universe;
+import brownshome.unreasonableodds.network.MultiverseNetwork;
 import brownshome.unreasonableodds.Rules;
 import brownshome.unreasonableodds.gdx.ApplicationResources;
 import brownshome.unreasonableodds.gdx.GdxRules;
 import brownshome.unreasonableodds.gdx.session.GdxSession;
-import brownshome.unreasonableodds.session.ClientSession;
-import brownshome.unreasonableodds.session.SessionPlayer;
+import brownshome.unreasonableodds.network.ClientSession;
+import brownshome.unreasonableodds.network.SessionPlayer;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
@@ -63,7 +65,7 @@ public class ConnectScreen extends StageScreen {
 							public void startGame(Rules rules, Instant startTime) {
 								assert rules instanceof GdxRules;
 
-								var multiverse = rules.createMultiverse(List.of(ui.player()), new MultiverseNetwork(), startTime);
+								var multiverse = rules.createMultiverse(List.of(ui.player()), new MultiverseNetwork.Builder(this).build(), startTime, new Random());
 
 								ui.disposeSession(false);
 								ui.nextScreen(new MultiverseScreen(resources, multiverse, ui.player()));
