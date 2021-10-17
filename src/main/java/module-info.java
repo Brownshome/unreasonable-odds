@@ -9,13 +9,14 @@ module brownshome.unreasonableodds {
 	exports brownshome.unreasonableodds.generation;
 	exports brownshome.unreasonableodds.history;
 	exports brownshome.unreasonableodds.tile;
-	exports brownshome.unreasonableodds.network;
+	exports brownshome.unreasonableodds.session;
 
 	requires transitive brownshome.vecmath;
-
-	requires brownshome.netcode;
+	requires transitive brownshome.netcode;
 
 	// Reflection access to schema names
-	opens brownshome.unreasonableodds.network.packets to brownshome.netcode;
-	opens brownshome.unreasonableodds.packets to brownshome.netcode;
+	opens brownshome.unreasonableodds.packets.lobby to brownshome.netcode;
+	opens brownshome.unreasonableodds.packets.session to brownshome.netcode;
+	opens brownshome.unreasonableodds.packets.game to brownshome.netcode;
+	exports brownshome.unreasonableodds.player;
 }

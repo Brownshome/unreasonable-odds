@@ -5,13 +5,13 @@ import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-import brownshome.unreasonableodds.Player;
+import brownshome.unreasonableodds.CharacterController;
 import brownshome.unreasonableodds.entites.PlayerCharacter;
 import brownshome.vecmath.Vec2;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 
-public class GdxPlayer implements Player {
+public class GdxCharacterController implements CharacterController {
 	@FunctionalInterface
 	private interface QueuedAction {
 		boolean performAction(PlayerCharacter.PlayerActions actions);

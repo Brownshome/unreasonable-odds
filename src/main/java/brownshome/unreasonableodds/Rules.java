@@ -10,7 +10,8 @@ import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.entites.*;
 import brownshome.unreasonableodds.generation.FloorTileGenerator;
 import brownshome.unreasonableodds.generation.TileType;
-import brownshome.unreasonableodds.network.*;
+import brownshome.unreasonableodds.player.ImportedGamePlayer;
+import brownshome.unreasonableodds.session.NetworkGameSession;
 import brownshome.unreasonableodds.tile.Tile;
 import brownshome.vecmath.Rot2;
 import brownshome.vecmath.Vec2;
@@ -92,35 +93,38 @@ public abstract class Rules {
 	// *************** CREATE MULTIVERSE ***************** //
 
 	/**
-	 *
-	 * @param localPlayers players whose actions are controlled by this session, and are hosted in this session
-	 * @param network the network information about this universe
+	 * Creates a multiverse
+	 * @param session the network information about this universe
 	 * @param epoch the time that the multiverse comes into existence
 	 * @param random a random number generator used to generate the universe
 	 * @return a new multiverse
 	 */
-	public Multiverse createMultiverse(Collection<Player> localPlayers, MultiverseNetwork network, Instant epoch, Random random) {
-		var map = generateStaticMap(random);
+	public Multiverse createMultiverse(NetworkGameSession session, Instant epoch, Random random) {
 		var universes = new ArrayList<Universe>();
-		int number = 0;
 
-		for (var player : localPlayers) {
-			var character = entities().createPlayerCharacter(createSpawnPosition(random), Vec2.ZERO, player, initialJumpEnergy());
-			universes.add(createUniverse(new Universe.Id(network.address(), number++), List.of(map, character), epoch));
-		}
+		for (var player : session.players()) {
+			var map = session.computeStaticMapIfAbsent(() -> generateStaticMap(random));
 
-		if (network != null) {
-			for (var player : network.remotePlayers()) {
-				var character = entities().createPlayerCharacter(createSpawnPosition(random), Vec2.ZERO, initialJumpEnergy(), player);
-				universes.add(createUniverse(new Universe.Id(network.address(), number++), List.of(map, character), epoch));
+			var character = entities().createPlayerCharacter(createSpawnPosition(random),
+					Vec2.ZERO,
+					initialJumpEnergy(),
+					player);
+
+			var universe = createUniverse(session.allocateUniverseId(), List.of(map, character), epoch);
+			universes.add(universe);
+
+			if (player instanceof ImportedGamePlayer imported) {
+				imported.startGame(universe);
 			}
 		}
 
-		return createMultiverse(universes, network);
+		var multiverse = createMultiverse(universes, session, epoch);
+		session.startGame(multiverse);
+		return multiverse;
 	}
 
-	protected Multiverse createMultiverse(List<Universe> universes, MultiverseNetwork network) {
-		return new Multiverse(this, universes, network);
+	protected Multiverse createMultiverse(List<Universe> universes, NetworkGameSession network, Instant epoch) {
+		return new Multiverse(this, epoch, universes, network);
 	}
 
 	protected Universe createUniverse(Universe.Id id, List<Entity> initialEntities, Instant epoch) {

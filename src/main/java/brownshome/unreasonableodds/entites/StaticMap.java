@@ -1,7 +1,7 @@
 package brownshome.unreasonableodds.entites;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 import brownshome.unreasonableodds.Universe;
 import brownshome.unreasonableodds.components.AABBCollisionShape;
@@ -25,6 +25,11 @@ public class StaticMap extends Entity {
 		walls.add(new AABBCollisionShape(Vec2.of(1.0, Double.NEGATIVE_INFINITY), Vec2.of(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY)));
 		walls.add(new AABBCollisionShape(Vec2.of(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY), Vec2.of(Double.POSITIVE_INFINITY, 0.0)));
 		walls.add(new AABBCollisionShape(Vec2.of(Double.NEGATIVE_INFINITY, 1.0), Vec2.of(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY)));
+	}
+
+	@Override
+	protected int id() {
+		return KnownEntities.STATIC_MAP.id();
 	}
 
 	protected final List<Tile> tiles() {

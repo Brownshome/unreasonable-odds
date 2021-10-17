@@ -5,7 +5,8 @@ import java.time.Duration;
 import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.entites.Character;
 import brownshome.unreasonableodds.gdx.*;
-import brownshome.unreasonableodds.network.PlayerCharacterNetwork;
+import brownshome.unreasonableodds.player.ControllingPlayer;
+import brownshome.unreasonableodds.player.GamePlayer;
 import brownshome.vecmath.MVec2;
 import brownshome.vecmath.Vec2;
 
@@ -24,25 +25,23 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 
 	protected GdxPlayerCharacter(Position position,
 	                             Vec2 velocity,
-	                             Player player,
+	                             GamePlayer player,
 	                             Duration timeTravelEnergy,
-	                             PlayerCharacterNetwork network,
 	                             RenderComponent renderComponent) {
-		super(position, velocity, player, timeTravelEnergy, network);
+		super(position, velocity, player, timeTravelEnergy);
 
 		this.renderComponent = renderComponent;
 	}
 
 	public static GdxPlayerCharacter createCharacter(Position position,
 	                                                 Vec2 velocity,
-	                                                 Player player,
+	                                                 GamePlayer player,
 	                                                 Duration timeTravelEnergy,
-													 PlayerCharacterNetwork network,
 	                                                 ApplicationResources resources) {
 		MVec2 renderPosition = position.position().copy();
 		renderPosition.add(-CHARACTER_RADIUS, -CHARACTER_RADIUS);
 
-		return new GdxPlayerCharacter(position, velocity, player, timeTravelEnergy, network, new RenderComponent(resources,
+		return new GdxPlayerCharacter(position, velocity, player, timeTravelEnergy, new RenderComponent(resources,
 				REGION_CACHE.getTextureRegion(resources.atlas()),
 				SIZE,
 				new Position(renderPosition, position.orientation())));
@@ -64,7 +63,7 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 
 	@Override
 	protected PlayerCharacter withTimeTravelEnergy(Duration energy) {
-		return new GdxPlayerCharacter(position(), velocity(), player(), energy, network(), renderComponent);
+		return new GdxPlayerCharacter(position(), velocity(), player(), energy, renderComponent);
 	}
 
 	@Override
@@ -76,13 +75,12 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 				velocity(),
 				player(),
 				timeTravelEnergy(),
-				network(),
 				renderComponent.withPosition(new Position(renderPosition, position.orientation())));
 	}
 
 	@Override
 	protected Character withVelocity(Vec2 velocity) {
-		return new GdxPlayerCharacter(position(), velocity, player(), timeTravelEnergy(), network(), renderComponent);
+		return new GdxPlayerCharacter(position(), velocity, player(), timeTravelEnergy(), renderComponent);
 	}
 
 	@Override
@@ -92,7 +90,7 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 		var gdxBuilder = (GdxUniverse.Builder) builder;
 		gdxBuilder.addRenderable(this);
 
-		if (player() instanceof GdxPlayer) {
+		if (player() instanceof ControllingPlayer controllingPlayer && controllingPlayer.controller() instanceof GdxCharacterController) {
 			// This is the keyboard controlled one
 			gdxBuilder.flagUniverseAsActive();
 		}

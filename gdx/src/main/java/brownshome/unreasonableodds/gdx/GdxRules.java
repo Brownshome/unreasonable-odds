@@ -11,7 +11,7 @@ import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.gdx.entities.GdxEntityFactory;
 import brownshome.unreasonableodds.gdx.generation.GdxClosedTileType;
 import brownshome.unreasonableodds.gdx.generation.GdxOpenTileType;
-import brownshome.unreasonableodds.gdx.session.GdxSession;
+import brownshome.unreasonableodds.gdx.session.GdxLobbySession;
 import brownshome.unreasonableodds.generation.TileType;
 import brownshome.vecmath.Rot2;
 import brownshome.vecmath.Vec2;
@@ -26,7 +26,7 @@ public final class GdxRules extends Rules {
 	}
 
 	public GdxRules(ByteBuffer buffer) {
-		this(GdxSession.getHost().applicationResources());
+		this(GdxLobbySession.get().applicationResources());
 	}
 
 	@Override

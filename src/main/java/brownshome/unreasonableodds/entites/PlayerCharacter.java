@@ -6,7 +6,7 @@ import java.util.Set;
 
 import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.components.Position;
-import brownshome.unreasonableodds.network.PlayerCharacterNetwork;
+import brownshome.unreasonableodds.player.*;
 import brownshome.vecmath.Vec2;
 
 /**
@@ -14,33 +14,33 @@ import brownshome.vecmath.Vec2;
  * player.
  */
 public class PlayerCharacter extends Character {
-	private final Player player;
-	private final Duration timeTravelEnergy;
-
 	/**
 	 * Holds networking information about the player character
 	 */
-	private final PlayerCharacterNetwork network;
+	private final GamePlayer player;
+	private final Duration timeTravelEnergy;
 
-	protected PlayerCharacter(Position position, Vec2 velocity, Player player, Duration timeTravelEnergy, PlayerCharacterNetwork network) {
+	protected PlayerCharacter(Position position, Vec2 velocity, GamePlayer player, Duration timeTravelEnergy) {
 		super(position, velocity);
-
-		assert player == null || network == null;
 
 		this.player = player;
 		this.timeTravelEnergy = timeTravelEnergy;
-		this.network = network;
+	}
+
+	@Override
+	protected final int id() {
+		return KnownEntities.PLAYER_CHARACTER.id();
 	}
 
 	protected final boolean isNetworkProxy() {
-		return network != null;
+		return player instanceof ImportedGamePlayer;
 	}
 
-	protected final PlayerCharacterNetwork network() {
-		return network;
+	protected final ImportedGamePlayer networkProxy() {
+		return (ImportedGamePlayer) player;
 	}
 
-	protected final Player player() {
+	protected final GamePlayer player() {
 		return player;
 	}
 
@@ -119,16 +119,18 @@ public class PlayerCharacter extends Character {
 
 	@Override
 	protected Actions createActions(Universe.UniverseStep step) {
+		assert player instanceof ControllingPlayer;
+
 		var actions = new PlayerActions(step);
-		player.performActions(actions);
+		((ControllingPlayer) player).controller().performActions(actions);
 		return actions;
 	}
 
 	@Override
 	protected PlayerCharacter nextEntity(Universe.UniverseStep step) {
 		if (isNetworkProxy()) {
-			network.pushUniverse(step.universe());
-			return network.nextPlayer(step);
+			networkProxy().pushUniverse(step.universe());
+			return networkProxy().next(step);
 		} else {
 			var next = (PlayerCharacter) super.nextEntity(step);
 
@@ -147,16 +149,16 @@ public class PlayerCharacter extends Character {
 	}
 
 	protected PlayerCharacter withTimeTravelEnergy(Duration energy) {
-		return new PlayerCharacter(position(), velocity(), player, energy, network);
+		return new PlayerCharacter(position(), velocity(), player, energy);
 	}
 
 	@Override
 	protected PlayerCharacter withPosition(Position position) {
-		return new PlayerCharacter(position, velocity(), player, timeTravelEnergy, network);
+		return new PlayerCharacter(position, velocity(), player, timeTravelEnergy);
 	}
 
 	@Override
 	protected Character withVelocity(Vec2 velocity) {
-		return new PlayerCharacter(position(), velocity, player, timeTravelEnergy, network);
+		return new PlayerCharacter(position(), velocity, player, timeTravelEnergy);
 	}
 }

@@ -10,7 +10,6 @@ import brownshome.unreasonableodds.components.Collidable;
 import brownshome.unreasonableodds.entites.Entity;
 import brownshome.unreasonableodds.history.BranchRecord;
 import brownshome.unreasonableodds.history.History;
-import brownshome.unreasonableodds.network.Session;
 
 /**
  * A single universe in the multiverse. This is an immutable object. The ordering of universes is based on the times that
@@ -280,5 +279,9 @@ public class Universe implements Comparable<Universe> {
 	 */
 	public final Instant beginning() {
 		return history.beginning();
+	}
+
+	public final List<Entity> entities() {
+		return entities;
 	}
 }

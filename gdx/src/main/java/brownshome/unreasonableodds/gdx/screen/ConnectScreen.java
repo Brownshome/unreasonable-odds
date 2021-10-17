@@ -3,19 +3,11 @@ package brownshome.unreasonableodds.gdx.screen;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.time.Instant;
-import java.util.List;
-import java.util.Random;
 
 import browngu.logging.Logger;
-import brownshome.unreasonableodds.Universe;
-import brownshome.unreasonableodds.network.MultiverseNetwork;
-import brownshome.unreasonableodds.Rules;
 import brownshome.unreasonableodds.gdx.ApplicationResources;
-import brownshome.unreasonableodds.gdx.GdxRules;
-import brownshome.unreasonableodds.gdx.session.GdxSession;
-import brownshome.unreasonableodds.network.ClientSession;
-import brownshome.unreasonableodds.network.SessionPlayer;
+import brownshome.unreasonableodds.gdx.session.GdxLobbySession;
+import brownshome.unreasonableodds.session.ClientLobbySession;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
@@ -41,42 +33,43 @@ public class ConnectScreen extends StageScreen {
 			public void changed(ChangeEvent event, Actor actor) {
 				if (connect.isPressed()) {
 					try {
-						class GdxClientSession extends ClientSession implements GdxSession {
+						class GdxClientLobbySession extends ClientLobbySession implements GdxLobbySession {
 							final ClientLobbyScreen ui = new ClientLobbyScreen(resources, this);
 
-							GdxClientSession() throws IOException {
+							GdxClientLobbySession() throws IOException {
 								super(name.getText(), new InetSocketAddress(address.getText(), Integer.decode(port.getText())), Gdx.app::postRunnable);
 								markThreadAsSessionThread();
 							}
 
 							@Override
-							public void players(List<SessionPlayer> players) {
-								super.players(players);
-								ui.players(players);
+							public void onPlayersChanged() {
+								super.onPlayersChanged();
+								ui.players(players());
 							}
 
 							@Override
-							public void hostLeft() {
-								super.hostLeft();
+							public void sessionLeft(InetSocketAddress address) {
+								// This must be the host leaving
+								super.sessionLeft(address);
 								ui.nextScreen(new TopMenuScreen(resources));
 							}
 
-							@Override
-							public void startGame(Rules rules, Instant startTime) {
-								assert rules instanceof GdxRules;
+							/*@Override
+							public void startGame(Instant startTime, List<Entity> entities) {
+								assert rules() instanceof GdxRules;
 
-								var multiverse = rules.createMultiverse(List.of(ui.player()), new MultiverseNetwork.Builder(this).build(), startTime, new Random());
+								var multiverse = rules().createMultiverse(entities, ui.player(), new MultiverseNetwork.Builder(this, rules()).build(), startTime, new Random());
 
 								ui.disposeSession(false);
 								ui.nextScreen(new MultiverseScreen(resources, multiverse, ui.player()));
-							}
+							}*/
 
 							@Override
 							public ApplicationResources applicationResources() {
 								return resources;
 							}
 						}
-						var session = new GdxClientSession();
+						var session = new GdxClientLobbySession();
 
 						nextScreen(session.ui);
 					} catch (IOException | NumberFormatException | SecurityException e) {

@@ -7,31 +7,29 @@ import brownshome.netcode.annotation.converter.Converter;
 import brownshome.unreasonableodds.Universe;
 
 public final class UniverseIdConverter implements Converter<Universe.Id> {
-	private static final InetSocketAddressConverter ADDRESS_CONVERTER = new InetSocketAddressConverter();
-
 	@Override
 	public void write(ByteBuffer buffer, Universe.Id object) {
-		ADDRESS_CONVERTER.write(buffer, object.creator());
+		InetSocketAddressConverter.INSTANCE.write(buffer, object.creator());
 		buffer.putInt(object.number());
 	}
 
 	@Override
 	public Universe.Id read(ByteBuffer buffer) {
-		return new Universe.Id(ADDRESS_CONVERTER.read(buffer), buffer.getInt());
+		return new Universe.Id(InetSocketAddressConverter.INSTANCE.read(buffer), buffer.getInt());
 	}
 
 	@Override
 	public int size(Universe.Id object) {
-		return ADDRESS_CONVERTER.size(object.creator()) + Integer.BYTES;
+		return InetSocketAddressConverter.INSTANCE.size(object.creator()) + Integer.BYTES;
 	}
 
 	@Override
 	public boolean isSizeExact(Universe.Id object) {
-		return ADDRESS_CONVERTER.isSizeExact(object.creator());
+		return InetSocketAddressConverter.INSTANCE.isSizeExact(object.creator());
 	}
 
 	@Override
 	public boolean isSizeConstant() {
-		return ADDRESS_CONVERTER.isSizeConstant();
+		return InetSocketAddressConverter.INSTANCE.isSizeConstant();
 	}
 }

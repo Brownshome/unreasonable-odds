@@ -1,11 +1,14 @@
 package brownshome.unreasonableodds.entites;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 
-import brownshome.unreasonableodds.Player;
 import brownshome.unreasonableodds.components.Position;
-import brownshome.unreasonableodds.network.PlayerCharacterNetwork;
+import brownshome.unreasonableodds.player.GamePlayer;
+import brownshome.unreasonableodds.player.Player;
+import brownshome.unreasonableodds.session.NetworkGameSession;
 import brownshome.unreasonableodds.tile.Tile;
 import brownshome.vecmath.Vec2;
 
@@ -13,12 +16,8 @@ import brownshome.vecmath.Vec2;
  * A factory for creating entities that do not have a root entity to derive their type from.
  */
 public class EntityFactory {
-	public PlayerCharacter createPlayerCharacter(Position position, Vec2 velocity, Player player, Duration timeTravelEnergy) {
-		return new PlayerCharacter(position, velocity, player, timeTravelEnergy, null);
-	}
-
-	public PlayerCharacter createPlayerCharacter(Position position, Vec2 velocity, Duration timeTravelEnergy, PlayerCharacterNetwork network) {
-		return new PlayerCharacter(position, velocity, null, timeTravelEnergy, network);
+	public PlayerCharacter createPlayerCharacter(Position position, Vec2 velocity, Duration timeTravelEnergy, GamePlayer player) {
+		return new PlayerCharacter(position, velocity, player, timeTravelEnergy);
 	}
 
 	public HistoricalCharacter createHistoricalCharacter(Position position, Vec2 velocity) {
@@ -31,5 +30,26 @@ public class EntityFactory {
 
 	public StaticMap createStaticMap(List<Tile> tiles) {
 		return new StaticMap(tiles);
+	}
+
+	// **************** NETWORK READ AND WRITE ********************
+
+	public final Entity read(ByteBuffer buffer) {
+		return read(Entity.readId(buffer), buffer);
+	}
+
+	protected Entity read(int id, ByteBuffer buffer) {
+		return switch (KnownEntities.values()[id]) {
+			case HISTORICAL_CHARACTER -> new HistoricalCharacter(buffer);
+			case JUMP_SCAR -> new JumpScar(buffer);
+
+			case PLAYER_CHARACTER -> null;
+
+			case STATIC_MAP -> NetworkGameSession.get().computeStaticMapIfAbsent(() -> createStaticMap(readTiles(buffer)));
+		};
+	}
+
+	private List<Tile> readTiles(ByteBuffer buffer) {
+		return Collections.emptyList();
 	}
 }

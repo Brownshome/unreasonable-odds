@@ -2,12 +2,11 @@ package brownshome.unreasonableodds.gdx.entities;
 
 import java.time.Duration;
 
-import brownshome.unreasonableodds.Player;
 import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.entites.*;
 import brownshome.unreasonableodds.gdx.ApplicationResources;
 import brownshome.unreasonableodds.gdx.components.RenderComponent;
-import brownshome.unreasonableodds.network.PlayerCharacterNetwork;
+import brownshome.unreasonableodds.player.GamePlayer;
 import brownshome.vecmath.Vec2;
 
 public class GdxEntityFactory extends EntityFactory {
@@ -22,13 +21,8 @@ public class GdxEntityFactory extends EntityFactory {
 	}
 
 	@Override
-	public GdxPlayerCharacter createPlayerCharacter(Position position, Vec2 velocity, Player player, Duration timeTravelEnergy) {
-		return GdxPlayerCharacter.createCharacter(position, velocity, player, timeTravelEnergy, null, resources);
-	}
-
-	@Override
-	public PlayerCharacter createPlayerCharacter(Position position, Vec2 velocity, Duration timeTravelEnergy, PlayerCharacterNetwork network) {
-		return GdxPlayerCharacter.createCharacter(position, velocity, null, timeTravelEnergy, network, resources);
+	public GdxPlayerCharacter createPlayerCharacter(Position position, Vec2 velocity, Duration timeTravelEnergy, GamePlayer player) {
+		return GdxPlayerCharacter.createCharacter(position, velocity, player, timeTravelEnergy, resources);
 	}
 
 	@Override

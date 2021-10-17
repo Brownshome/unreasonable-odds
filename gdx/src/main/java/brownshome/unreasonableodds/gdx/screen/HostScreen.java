@@ -2,11 +2,10 @@ package brownshome.unreasonableodds.gdx.screen;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.List;
 
-import brownshome.unreasonableodds.Player;
 import brownshome.unreasonableodds.gdx.ApplicationResources;
-import brownshome.unreasonableodds.network.HostSession;
+import brownshome.unreasonableodds.gdx.GdxRules;
+import brownshome.unreasonableodds.session.HostLobbySession;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
@@ -41,22 +40,15 @@ public class HostScreen extends StageScreen {
 			public void clicked(InputEvent event, float x, float y) {
 				int p = Integer.decode(port.getText());
 				try {
-					var session = new HostSession(name.getText(), p, Gdx.app::postRunnable) {
+					var session = new HostLobbySession(new GdxRules(resources), name.getText(), p, Gdx.app::postRunnable) {
 						final HostLobbyScreen ui = new HostLobbyScreen(resources, this);
 
 						{ markThreadAsSessionThread(); }
 
 						@Override
-						protected void onPlayersChanged() {
+						public void onPlayersChanged() {
 							super.onPlayersChanged();
 							ui.players(players());
-						}
-
-						@Override
-						protected List<Player> createPlayers() {
-							var list = super.createPlayers();
-							list.add(ui.player());
-							return list;
 						}
 					};
 

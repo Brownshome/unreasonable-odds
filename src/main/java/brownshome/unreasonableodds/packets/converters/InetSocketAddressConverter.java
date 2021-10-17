@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 import brownshome.netcode.annotation.converter.Converter;
 
 public class InetSocketAddressConverter implements Converter<InetSocketAddress> {
+	public static final InetSocketAddressConverter INSTANCE = new InetSocketAddressConverter();
+
 	@Override
 	public void write(ByteBuffer buffer, InetSocketAddress object) {
 		byte[] address = object.getAddress().getAddress();

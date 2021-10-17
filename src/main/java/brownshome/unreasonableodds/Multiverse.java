@@ -1,41 +1,42 @@
 package brownshome.unreasonableodds;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import brownshome.unreasonableodds.entites.Entity;
-import brownshome.unreasonableodds.network.MultiverseNetwork;
+import brownshome.unreasonableodds.session.GameSession;
+import brownshome.unreasonableodds.session.NetworkGameSession;
 
 /**
  * The base class for the game, representing a collection of universes
  */
 public class Multiverse {
 	private final Rules rules;
-	private final MultiverseNetwork network;
-	private final AtomicInteger nextUniverseId;
+	private final GameSession session;
+	private final Instant epoch;
 
 	private List<Universe> universes;
 
-	protected Multiverse(Rules rules, List<Universe> universes, MultiverseNetwork network) {
+	protected Multiverse(Rules rules, Instant epoch, List<Universe> universes, GameSession session) {
 		assert rules != null;
 		assert universes != null;
 
 		this.rules = rules;
 		this.universes = universes;
+		this.epoch = epoch;
 
-		if (network != null) {
+		if (isNetworked()) {
 			for (var universe : universes) {
-				network.registerNewUniverse(universe);
+				network().registerNewUniverse(universe);
 			}
 		}
 
-		this.network = network;
-		this.nextUniverseId = new AtomicInteger(universes.stream().map(Universe::id).mapToInt(Universe.Id::number).max().orElse(-1) + 1);
+		this.session = session;
 	}
 
 	public final Universe.Id allocateUniverseId() {
-		return new Universe.Id(isNetworked() ? network.address() : null, nextUniverseId.getAndIncrement());
+		return session.allocateUniverseId();
 	}
 
 	public final List<Universe> universes() {
@@ -50,13 +51,16 @@ public class Multiverse {
 		return rules;
 	}
 
-	public final MultiverseNetwork network() {
-		assert isNetworked();
-		return network;
+	public final NetworkGameSession network() {
+		return (NetworkGameSession) session;
 	}
 
 	public final boolean isNetworked() {
-		return network != null;
+		return session instanceof NetworkGameSession;
+	}
+
+	public final Instant epoch() {
+		return epoch;
 	}
 
 	/**
@@ -155,7 +159,7 @@ public class Multiverse {
 			@Override
 			public void addUniverse(Universe universe) {
 				if (isNetworked()) {
-					network.registerNewUniverse(universe);
+					network().registerNewUniverse(universe);
 				}
 
 				newUniverses.add(universe);

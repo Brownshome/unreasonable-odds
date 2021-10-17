@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 import brownshome.netcode.NetworkUtils;
 import brownshome.netcode.annotation.converter.Converter;
 import brownshome.unreasonableodds.Rules;
-import brownshome.unreasonableodds.network.ClientSession;
+import brownshome.unreasonableodds.session.NetworkSession;
 
 public final class RulesConverter implements Converter<Rules> {
 	@Override
@@ -18,7 +18,7 @@ public final class RulesConverter implements Converter<Rules> {
 	public Rules read(ByteBuffer buffer) {
 		try {
 			// Use the current session classloader
-			return (Rules) ClientSession.getHost()
+			return (Rules) NetworkSession.get()
 					.getClass().getClassLoader()
 					.loadClass(NetworkUtils.readString(buffer))
 					.getConstructor(ByteBuffer.class).newInstance(buffer);
