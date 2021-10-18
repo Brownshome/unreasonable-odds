@@ -3,6 +3,7 @@ package brownshome.unreasonableodds.gdx.screen;
 import java.io.IOException;
 import java.net.ServerSocket;
 
+import brownshome.unreasonableodds.CharacterController;
 import brownshome.unreasonableodds.gdx.ApplicationResources;
 import brownshome.unreasonableodds.gdx.GdxRules;
 import brownshome.unreasonableodds.session.HostLobbySession;
@@ -49,6 +50,11 @@ public class HostScreen extends StageScreen {
 						public void onPlayersChanged() {
 							super.onPlayersChanged();
 							ui.players(players());
+						}
+
+						@Override
+						public CharacterController localController() {
+							return ui.controller();
 						}
 					};
 

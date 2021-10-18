@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 import browngu.logging.Logger;
+import brownshome.unreasonableodds.CharacterController;
 import brownshome.unreasonableodds.gdx.ApplicationResources;
 import brownshome.unreasonableodds.gdx.session.GdxLobbySession;
 import brownshome.unreasonableodds.session.ClientLobbySession;
@@ -48,9 +49,9 @@ public class ConnectScreen extends StageScreen {
 							}
 
 							@Override
-							public void sessionLeft(InetSocketAddress address) {
+							public void sessionLeft(int sessionId) {
 								// This must be the host leaving
-								super.sessionLeft(address);
+								super.sessionLeft(sessionId);
 								ui.nextScreen(new TopMenuScreen(resources));
 							}
 
@@ -63,6 +64,11 @@ public class ConnectScreen extends StageScreen {
 								ui.disposeSession(false);
 								ui.nextScreen(new MultiverseScreen(resources, multiverse, ui.player()));
 							}*/
+
+							@Override
+							public CharacterController localController() {
+								return ui.controller();
+							}
 
 							@Override
 							public ApplicationResources applicationResources() {

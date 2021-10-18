@@ -2,12 +2,14 @@ package brownshome.unreasonableodds.entites;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
+import java.time.Instant;
+import java.util.*;
 
 import brownshome.unreasonableodds.components.Position;
+import brownshome.unreasonableodds.packets.converters.InstantConverter;
 import brownshome.unreasonableodds.player.GamePlayer;
 import brownshome.unreasonableodds.player.Player;
+import brownshome.unreasonableodds.session.Id;
 import brownshome.unreasonableodds.session.NetworkGameSession;
 import brownshome.unreasonableodds.tile.Tile;
 import brownshome.vecmath.Vec2;
@@ -42,14 +44,12 @@ public class EntityFactory {
 		return switch (KnownEntities.values()[id]) {
 			case HISTORICAL_CHARACTER -> new HistoricalCharacter(buffer);
 			case JUMP_SCAR -> new JumpScar(buffer);
-
-			case PLAYER_CHARACTER -> null;
-
+			case PLAYER_CHARACTER -> new PlayerCharacter(buffer);
 			case STATIC_MAP -> NetworkGameSession.get().computeStaticMapIfAbsent(() -> createStaticMap(readTiles(buffer)));
 		};
 	}
 
-	private List<Tile> readTiles(ByteBuffer buffer) {
+	protected List<Tile> readTiles(ByteBuffer buffer) {
 		return Collections.emptyList();
 	}
 }

@@ -4,6 +4,7 @@ import brownshome.netcode.Connection;
 import brownshome.netcode.annotation.*;
 import brownshome.netcode.annotation.converter.UseConverter;
 import brownshome.netcode.udp.UDPConnection;
+import brownshome.unreasonableodds.session.ClientLobbySession;
 import brownshome.unreasonableodds.session.NetworkSession;
 
 final class SessionManagement {
@@ -22,6 +23,7 @@ final class SessionManagement {
 	static void leaveSession(@ConnectionParam Connection<?> connection,
 	                         @UseConverter(NetworkSession.NetworkSessionConverter.class) NetworkSession session) {
 		LOGGER.log(System.Logger.Level.TRACE, "Address {0} left the session", connection.address());
-		session.sessionLeft(((UDPConnection) connection).address());
+
+		session.sessionLeft(session.sessionId(((UDPConnection) connection).address()));
 	}
 }

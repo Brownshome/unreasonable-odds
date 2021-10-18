@@ -8,9 +8,7 @@ import brownshome.netcode.annotation.DefinePacket;
 import brownshome.netcode.annotation.converter.UseConverter;
 import brownshome.netcode.udp.UDPConnection;
 import brownshome.unreasonableodds.packets.converters.InstantConverter;
-import brownshome.unreasonableodds.player.NetworkPlayer;
-import brownshome.unreasonableodds.session.ClientLobbySession;
-import brownshome.unreasonableodds.session.HostLobbySession;
+import brownshome.unreasonableodds.session.*;
 
 final class TimeSyncPackets {
 	private TimeSyncPackets() { }
@@ -27,7 +25,7 @@ final class TimeSyncPackets {
 	                     byte id,
 						 @UseConverter(InstantConverter.class) Instant now) {
 		var udpConnection = (UDPConnection) connection;
-		session.getPlayer(new NetworkPlayer.Id(udpConnection.address(), Byte.toUnsignedInt(id)))
+		session.player(new Id(session.sessionId(udpConnection.address()), Byte.toUnsignedInt(id)))
 				.completeTimeSync(now);
 	}
 }

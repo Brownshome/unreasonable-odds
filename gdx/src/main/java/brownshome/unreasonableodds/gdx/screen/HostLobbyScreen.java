@@ -22,7 +22,7 @@ public class HostLobbyScreen extends LobbyScreen {
 				var startingScreen = new StartingGameScreen(resources);
 				nextScreen(startingScreen);
 
-				session.startGame(player(), new Random());
+				session.startGame(new Random());
 						//.thenAccept(multiverse -> startingScreen.nextScreen(new MultiverseScreen(resources, multiverse, player())));
 			}
 		});

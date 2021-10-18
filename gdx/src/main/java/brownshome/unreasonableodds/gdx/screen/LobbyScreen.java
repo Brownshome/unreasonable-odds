@@ -13,7 +13,7 @@ public abstract class LobbyScreen extends StageScreen {
 	private final LocalPlayerLobbySession session;
 	private final List<LobbyPlayer> playerList;
 	private final Table rightPanel;
-	private final GdxCharacterController player;
+	private final GdxCharacterController controller;
 
 	private boolean disposeSession = true;
 
@@ -21,7 +21,7 @@ public abstract class LobbyScreen extends StageScreen {
 		super(resources);
 
 		this.session = session;
-		this.player = new GdxCharacterController();
+		this.controller = new GdxCharacterController();
 
 		var root = new Table(resources.skin());
 		root.setFillParent(true);
@@ -80,8 +80,8 @@ public abstract class LobbyScreen extends StageScreen {
 		playerList.setItems(players.toArray(LobbyPlayer[]::new));
 	}
 
-	protected final GdxCharacterController player() {
-		return player;
+	protected final GdxCharacterController controller() {
+		return controller;
 	}
 
 	/**

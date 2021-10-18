@@ -11,6 +11,7 @@ import brownshome.unreasonableodds.gdx.components.RenderComponent;
 import brownshome.unreasonableodds.gdx.components.Renderable;
 import brownshome.unreasonableodds.history.BranchRecord;
 import brownshome.unreasonableodds.history.History;
+import brownshome.unreasonableodds.session.Id;
 import brownshome.vecmath.Rot2;
 import brownshome.vecmath.Vec2;
 import com.badlogic.gdx.math.Affine2;
@@ -39,7 +40,7 @@ public class GdxUniverse extends Universe implements Renderable {
 		this.isActive = isActive;
 	}
 
-	public static GdxUniverse createEmptyUniverse(Universe.Id id, Instant beginning, ApplicationResources resources) {
+	public static GdxUniverse createEmptyUniverse(Id id, Instant beginning, ApplicationResources resources) {
 		var renderComponent = new RenderComponent(resources, TEXTURE_REGION_CACHE.getTextureRegion(resources.atlas()), SIZE, new Position(Vec2.ZERO, Rot2.IDENTITY));
 
 		return new GdxUniverse(id,

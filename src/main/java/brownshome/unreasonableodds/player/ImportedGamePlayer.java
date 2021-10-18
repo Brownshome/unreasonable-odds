@@ -9,6 +9,7 @@ import brownshome.unreasonableodds.Universe;
 import brownshome.unreasonableodds.entites.Entity;
 import brownshome.unreasonableodds.entites.PlayerCharacter;
 import brownshome.unreasonableodds.packets.game.*;
+import brownshome.unreasonableodds.session.Id;
 
 /**
  * A player that is controlled by session other than this one but hosted in this session
@@ -55,7 +56,8 @@ public class ImportedGamePlayer extends NetworkGamePlayer {
 	}
 
 	public void startGame(Universe initialUniverse) {
-		controllingConnection.send(new SetEpochPacket(null, initialUniverse.beginning()));
-		pushUniverse(initialUniverse);
+		controllingConnection.send(new StartGamePacket(null, initialUniverse.beginning())).thenRun(() -> {
+			pushUniverse(initialUniverse);
+		});
 	}
 }

@@ -6,6 +6,8 @@ import java.time.Instant;
 import brownshome.netcode.annotation.converter.Converter;
 
 public final class InstantConverter implements Converter<Instant> {
+	public static final InstantConverter INSTANCE = new InstantConverter();
+
 	@Override
 	public void write(ByteBuffer buffer, Instant object) {
 		buffer.putLong(object.getEpochSecond()).putInt(object.getNano());

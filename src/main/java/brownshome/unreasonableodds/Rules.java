@@ -10,7 +10,9 @@ import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.entites.*;
 import brownshome.unreasonableodds.generation.FloorTileGenerator;
 import brownshome.unreasonableodds.generation.TileType;
+import brownshome.unreasonableodds.packets.converters.InstantConverter;
 import brownshome.unreasonableodds.player.ImportedGamePlayer;
+import brownshome.unreasonableodds.session.Id;
 import brownshome.unreasonableodds.session.NetworkGameSession;
 import brownshome.unreasonableodds.tile.Tile;
 import brownshome.vecmath.Rot2;
@@ -127,7 +129,7 @@ public abstract class Rules {
 		return new Multiverse(this, epoch, universes, network);
 	}
 
-	protected Universe createUniverse(Universe.Id id, List<Entity> initialEntities, Instant epoch) {
+	protected Universe createUniverse(Id id, List<Entity> initialEntities, Instant epoch) {
 		var builder = universeBuilder(id, epoch);
 
 		for (Entity e : initialEntities) {
@@ -137,7 +139,7 @@ public abstract class Rules {
 		return builder.build();
 	}
 
-	protected Universe.Builder universeBuilder(Universe.Id id, Instant epoch) {
+	protected Universe.Builder universeBuilder(Id id, Instant epoch) {
 		return Universe.createEmptyUniverse(id, epoch).builder(Duration.ZERO);
 	}
 
@@ -157,5 +159,17 @@ public abstract class Rules {
 
 	public String networkClassName() {
 		return getClass().getName();
+	}
+
+	public Universe readUniverse(ByteBuffer buffer) {
+		Id id = new Id(buffer);
+		Instant now = InstantConverter.INSTANCE.read(buffer);
+		int numberOfEntities = Short.toUnsignedInt(buffer.getShort());
+		var entities = new ArrayList<Entity>(numberOfEntities);
+		for (int i = 0; i < numberOfEntities; i++) {
+			entities.add(entities().read(buffer));
+		}
+
+		return createUniverse(id, entities, now);
 	}
 }

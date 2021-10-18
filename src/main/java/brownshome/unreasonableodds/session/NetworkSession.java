@@ -2,9 +2,9 @@ package brownshome.unreasonableodds.session;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Executor;
+import java.util.function.ToIntFunction;
 
 import brownshome.netcode.BaseSchema;
 import brownshome.netcode.Schema;
@@ -57,6 +57,11 @@ public abstract class NetworkSession implements AutoCloseable, Session {
 
 	private final UDPConnectionManager connectionManager;
 
+	private boolean hasSessionId = false;
+	private int sessionId = Integer.MAX_VALUE;
+
+	private final Map<InetSocketAddress, Integer> sessionIds = new HashMap<>();
+
 	protected NetworkSession(UDPConnectionManager connectionManager, Executor executor) {
 		this(connectionManager);
 		connectionManager.registerExecutor("default", executor, Integer.MAX_VALUE);
@@ -81,10 +86,43 @@ public abstract class NetworkSession implements AutoCloseable, Session {
 		return List.of(new BaseSchema(), new SessionSchema(), new LobbySchema(), new GameSchema());
 	}
 
-	public void sessionLeft(InetSocketAddress address) { }
+	public void sessionLeft(int sessionId) { }
 
 	@Override
 	public void close() {
 		connectionManager.closeAsync();
+	}
+
+	public void sessionId(int id) {
+		if (hasSessionId) {
+			throw new IllegalStateException();
+		}
+
+		hasSessionId = true;
+		sessionId = id;
+	}
+
+	protected final int sessionId() {
+		assert hasSessionId;
+		return sessionId;
+	}
+
+	/**
+	 * Gets of makes a session id
+	 * @param address the address of the session
+	 * @param func a function to produce a session id
+	 * @return the session id
+	 */
+	protected final int getOrMakeSessionId(InetSocketAddress address, ToIntFunction<InetSocketAddress> func) {
+		return sessionIds.computeIfAbsent(address, func::applyAsInt);
+	}
+
+	public final int sessionId(InetSocketAddress address) {
+		return sessionIds.get(address);
+	}
+
+	@Override
+	public String toString() {
+		return hasSessionId ? "Session " + sessionId : "Session (no id)";
 	}
 }

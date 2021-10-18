@@ -1,5 +1,6 @@
 package brownshome.unreasonableodds.session;
 
+import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -32,7 +33,11 @@ public abstract class NetworkLobbySession extends NetworkSession implements Lobb
 		return List.of(new BaseSchema(), new SessionSchema(), new LobbySchema());
 	}
 
-	protected final NetworkPlayer.Id allocatePlayerId() {
-		return new NetworkPlayer.Id(connectionManager().address(), playerId.getAndIncrement());
+	protected final Id allocatePlayerId() {
+		return new Id(sessionId(), playerId.getAndIncrement());
+	}
+
+	protected NetworkGameSession.Builder gameSessionBuilder() {
+		return new NetworkGameSession.Builder(this);
 	}
 }

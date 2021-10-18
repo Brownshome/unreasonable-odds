@@ -1,12 +1,16 @@
 package brownshome.unreasonableodds.entites;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
 
 import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.components.Position;
+import brownshome.unreasonableodds.packets.converters.DurationConverter;
 import brownshome.unreasonableodds.player.*;
+import brownshome.unreasonableodds.session.Id;
+import brownshome.unreasonableodds.session.NetworkGameSession;
 import brownshome.vecmath.Vec2;
 
 /**
@@ -160,5 +164,36 @@ public class PlayerCharacter extends Character {
 	@Override
 	protected Character withVelocity(Vec2 velocity) {
 		return new PlayerCharacter(position(), velocity, player, timeTravelEnergy);
+	}
+
+	protected PlayerCharacter(ByteBuffer buffer) {
+		super(buffer);
+
+		var session = NetworkGameSession.get();
+		this.player = session.player(new Id(buffer));
+		this.timeTravelEnergy = DurationConverter.INSTANCE.read(buffer);
+	}
+
+	@Override
+	public void write(ByteBuffer buffer) {
+		super.write(buffer);
+
+		((NetworkGamePlayer) player).id().write(buffer);
+		DurationConverter.INSTANCE.write(buffer, timeTravelEnergy);
+	}
+
+	@Override
+	public int size() {
+		return super.size() + ((NetworkGamePlayer) player).id().size() + DurationConverter.INSTANCE.size(timeTravelEnergy);
+	}
+
+	@Override
+	public boolean isSizeExact() {
+		return super.isSizeExact() && ((NetworkGamePlayer) player).id().isSizeExact() && DurationConverter.INSTANCE.isSizeExact(timeTravelEnergy);
+	}
+
+	@Override
+	public boolean isSizeConstant() {
+		return super.isSizeConstant() && ((NetworkGamePlayer) player).id().isSizeConstant() && DurationConverter.INSTANCE.isSizeConstant();
 	}
 }

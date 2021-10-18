@@ -2,6 +2,8 @@ package brownshome.unreasonableodds.player;
 
 import java.net.InetSocketAddress;
 
+import brownshome.unreasonableodds.session.Id;
+
 /**
  * A player in a networked session (game or lobby). All such players are assigned an ID on creation. The following
  * terminology is used for networked players:
@@ -13,9 +15,5 @@ import java.net.InetSocketAddress;
  * </ul>
  */
 public interface NetworkPlayer extends Player {
-	record Id(InetSocketAddress address, int number) {
-
-	}
-
 	Id id();
 }

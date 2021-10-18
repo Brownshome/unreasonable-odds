@@ -7,6 +7,8 @@ import brownshome.unreasonableodds.entites.Entity;
 import brownshome.unreasonableodds.session.*;
 
 public class EntityConverter implements Converter<Entity> {
+	public static final EntityConverter INSTANCE = new EntityConverter();
+
 	@Override
 	public void write(ByteBuffer buffer, Entity object) {
 		object.write(buffer);

@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 
 import brownshome.netcode.udp.UDPConnection;
 import brownshome.unreasonableodds.packets.lobby.RequestTimeSyncPacket;
+import brownshome.unreasonableodds.session.Id;
 
 /**
  * A lobby player that represents a client on the host session.
@@ -25,8 +26,8 @@ public class ImportedLobbyPlayer extends NetworkLobbyPlayer {
 
 	private final CompletableFuture<Void> timeSyncComplete = new CompletableFuture<>();
 
-	protected ImportedLobbyPlayer(String name, int number, UDPConnection connection) {
-		super(name, false, false, new Id(connection.address(), number));
+	protected ImportedLobbyPlayer(String name, Id id, UDPConnection connection) {
+		super(name, false, false, id);
 
 		this.connection = connection;
 	}

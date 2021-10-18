@@ -13,6 +13,7 @@ import brownshome.unreasonableodds.gdx.generation.GdxClosedTileType;
 import brownshome.unreasonableodds.gdx.generation.GdxOpenTileType;
 import brownshome.unreasonableodds.gdx.session.GdxLobbySession;
 import brownshome.unreasonableodds.generation.TileType;
+import brownshome.unreasonableodds.session.Id;
 import brownshome.vecmath.Rot2;
 import brownshome.vecmath.Vec2;
 
@@ -30,7 +31,7 @@ public final class GdxRules extends Rules {
 	}
 
 	@Override
-	protected GdxUniverse.Builder universeBuilder(Universe.Id id, Instant epoch) {
+	protected GdxUniverse.Builder universeBuilder(Id id, Instant epoch) {
 		return (GdxUniverse.Builder) GdxUniverse.createEmptyUniverse(id, epoch, resources).builder(Duration.ZERO);
 	}
 

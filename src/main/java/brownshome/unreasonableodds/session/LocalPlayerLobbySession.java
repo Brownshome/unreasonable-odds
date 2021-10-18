@@ -1,5 +1,6 @@
 package brownshome.unreasonableodds.session;
 
+import brownshome.unreasonableodds.CharacterController;
 import brownshome.unreasonableodds.player.LobbyPlayer;
 
 /**
@@ -7,4 +8,5 @@ import brownshome.unreasonableodds.player.LobbyPlayer;
  */
 public interface LocalPlayerLobbySession extends LobbySession {
 	LobbyPlayer localPlayer();
+	CharacterController localController();
 }

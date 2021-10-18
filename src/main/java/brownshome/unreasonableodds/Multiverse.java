@@ -5,8 +5,7 @@ import java.time.Instant;
 import java.util.*;
 
 import brownshome.unreasonableodds.entites.Entity;
-import brownshome.unreasonableodds.session.GameSession;
-import brownshome.unreasonableodds.session.NetworkGameSession;
+import brownshome.unreasonableodds.session.*;
 
 /**
  * The base class for the game, representing a collection of universes
@@ -35,7 +34,7 @@ public class Multiverse {
 		this.session = session;
 	}
 
-	public final Universe.Id allocateUniverseId() {
+	public final Id allocateUniverseId() {
 		return session.allocateUniverseId();
 	}
 

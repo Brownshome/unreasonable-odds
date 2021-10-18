@@ -5,18 +5,16 @@ import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import brownshome.netcode.udp.UDPConnectionManager;
 import brownshome.unreasonableodds.*;
-import brownshome.unreasonableodds.packets.converters.LobbyPlayerProxy;
-import brownshome.unreasonableodds.packets.lobby.SendPlayersPacket;
-import brownshome.unreasonableodds.packets.lobby.SetRulesPacket;
+import brownshome.unreasonableodds.packets.lobby.*;
 import brownshome.unreasonableodds.packets.session.LeaveSessionPacket;
 import brownshome.unreasonableodds.player.*;
 
-public class HostLobbySession extends NetworkLobbySession implements LocalPlayerLobbySession {
+public abstract class HostLobbySession extends NetworkLobbySession implements LocalPlayerLobbySession {
 	private static final System.Logger LOGGER = System.getLogger(HostLobbySession.class.getModule().getName());
 
 	public static final class HostLobbySessionConverter extends SessionConverter<HostLobbySession> {}
@@ -28,7 +26,12 @@ public class HostLobbySession extends NetworkLobbySession implements LocalPlayer
 	private Rules rules;
 	private final NetworkLobbyPlayer localPlayer;
 
-	private final Map<NetworkPlayer.Id, ImportedLobbyPlayer> players;
+	private final Map<Id, ImportedLobbyPlayer> players;
+	private final AtomicInteger nextSessionId = new AtomicInteger();
+
+	{
+		sessionId(allocateSessionId());
+	}
 
 	protected HostLobbySession(Rules rules, String name, int port, Executor executor) throws IOException {
 		super(new UDPConnectionManager(allSchema(), port), executor);
@@ -72,8 +75,9 @@ public class HostLobbySession extends NetworkLobbySession implements LocalPlayer
 		forAllClients(c -> c.connection().send(packet));
 	}
 
+	@SuppressWarnings("unchecked")
 	public void onPlayersChanged() {
-		var packet  = new SendPlayersPacket(null, players().stream().map(LobbyPlayerProxy::new).collect(Collectors.toList()));
+		var packet  = new SendPlayersPacket(null, (Collection<NetworkLobbyPlayer>) players());
 		forAllClients(c -> c.connection().send(packet));
 	}
 
@@ -88,25 +92,43 @@ public class HostLobbySession extends NetworkLobbySession implements LocalPlayer
 		return localPlayer;
 	}
 
-	public final ImportedLobbyPlayer getOrMakePlayer(NetworkPlayer.Id id) {
-		return players.computeIfAbsent(id, this::createNewPlayer);
+	public final ImportedLobbyPlayer getOrMakePlayer(Id id, InetSocketAddress address) {
+		return players.computeIfAbsent(id, i -> createNewPlayer(i, address));
 	}
 
-	public final ImportedLobbyPlayer getPlayer(NetworkPlayer.Id id) {
+	public final ImportedLobbyPlayer player(Id id) {
 		return players.get(id);
 	}
 
+	public int getOrMakeSessionId(InetSocketAddress address) {
+		return getOrMakeSessionId(address, a -> {
+			var id = allocateSessionId();
+
+			assert id >= 0 && id < (1 << Byte.SIZE);
+
+			var connection = connectionManager().getOrCreateConnection(address);
+			connection.send(new SetSessionIdPacket(null, (byte) id));
+			connection.send(new SetRulesPacket(null, rules));
+
+			return id;
+		});
+	}
+
+	private int allocateSessionId() {
+		return nextSessionId.getAndIncrement();
+	}
+
 	@Override
-	public final void sessionLeft(InetSocketAddress address) {
-		if (!players.keySet().removeIf(id -> id.address().equals(address))) {
-			throw new IllegalStateException("%s is not connected to this session".formatted(address));
+	public final void sessionLeft(int sessionId) {
+		if (!players.keySet().removeIf(id -> id.sessionId() == sessionId)) {
+			throw new IllegalStateException("Session %d is not connected to this session".formatted(sessionId));
 		}
 
 		onPlayersChanged();
 	}
 
-	private ImportedLobbyPlayer createNewPlayer(NetworkPlayer.Id id) {
-		return new ImportedLobbyPlayer(id.toString(), id.number(), connectionManager().getOrCreateConnection(id.address())) {
+	private ImportedLobbyPlayer createNewPlayer(Id id, InetSocketAddress address) {
+		return new ImportedLobbyPlayer(id.toString(), id, connectionManager().getOrCreateConnection(address)) {
 			@Override
 			public void name(String name) {
 				super.name(name);
@@ -121,7 +143,7 @@ public class HostLobbySession extends NetworkLobbySession implements LocalPlayer
 		};
 	}
 
-	public void startGame(CharacterController localController, Random random) {
+	public void startGame(Random random) {
 		for (var player : players.values()) {
 			// Wait for the sync send and then receive
 			/*
@@ -136,16 +158,17 @@ public class HostLobbySession extends NetworkLobbySession implements LocalPlayer
 		CompletableFuture.allOf(players.values().stream()
 				.map(ImportedLobbyPlayer::timeSyncComplete).toArray(CompletableFuture[]::new)
 		).thenAccept(v -> {
-			var builder = new NetworkGameSession.Builder(connectionManager(), rules);
+			var builder = gameSessionBuilder();
 
-			builder.addPlayer(LocalGamePlayer.create(localPlayer, localController));
+			builder.addPlayer(LocalGamePlayer.create(localPlayer, localController()));
 
 			for (var player : players.values()) {
 				builder.addPlayer(ImportedGamePlayer.create(player));
+				builder.addConnection(player.connection());
 			}
 
 			var gameSession = builder.build();
-			gameSession.markThreadAsSessionThread();
+
 			rules.createMultiverse(gameSession, rules.gameStartTime(), random);
 		});
 	}

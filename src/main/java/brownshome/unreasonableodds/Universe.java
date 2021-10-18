@@ -1,21 +1,25 @@
 package brownshome.unreasonableodds;
 
-import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
+import brownshome.netcode.annotation.converter.Networkable;
 import brownshome.unreasonableodds.collision.CollisionDetector;
 import brownshome.unreasonableodds.components.Collidable;
 import brownshome.unreasonableodds.entites.Entity;
 import brownshome.unreasonableodds.history.BranchRecord;
 import brownshome.unreasonableodds.history.History;
+import brownshome.unreasonableodds.packets.converters.EntityConverter;
+import brownshome.unreasonableodds.packets.converters.InstantConverter;
+import brownshome.unreasonableodds.session.Id;
 
 /**
  * A single universe in the multiverse. This is an immutable object. The ordering of universes is based on the times that
  * they were split off from each other.
  */
-public class Universe implements Comparable<Universe> {
+public class Universe implements Comparable<Universe>, Networkable {
 	private final Instant now;
 	private final List<Entity> entities;
 	private final CollisionDetector collisionDetector;
@@ -23,10 +27,6 @@ public class Universe implements Comparable<Universe> {
 	private final History history;
 	private final BranchRecord branchRecord;
 	private final Id id;
-
-	public record Id(InetSocketAddress creator, int number) {
-		public static final Id DISCONNECTED = null;
-	}
 
 	protected Universe(Id id, Instant now, List<Entity> entities, History previousHistory, BranchRecord branchRecord, CollisionDetector collisionDetector) {
 		this.id = id;
@@ -283,5 +283,49 @@ public class Universe implements Comparable<Universe> {
 
 	public final List<Entity> entities() {
 		return entities;
+	}
+
+	@Override
+	public String toString() {
+		return "Universe (%d entities) @ %s".formatted(entities.size(), now);
+	}
+
+	@Override
+	public void write(ByteBuffer buffer) {
+		id.write(buffer);
+		InstantConverter.INSTANCE.write(buffer, now);
+
+		int length = entities.size();
+		assert length < (1 << Short.SIZE);
+		buffer.putShort((short) length);
+
+		for (var entity : entities) {
+			EntityConverter.INSTANCE.write(buffer, entity);
+		}
+	}
+
+	@Override
+	public int size() {
+		int size = 0;
+
+		size += id.size();
+		size += InstantConverter.INSTANCE.size(now);
+		size += Short.BYTES;
+
+		for (var entity : entities) {
+			size += entity.size();
+		}
+
+		return size;
+	}
+
+	@Override
+	public boolean isSizeExact() {
+		return false;
+	}
+
+	@Override
+	public boolean isSizeConstant() {
+		return false;
 	}
 }
