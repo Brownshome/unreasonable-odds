@@ -50,10 +50,9 @@ java {
 
 dependencies {
 	api 'brownshome:vecmath:[3.5.0, 4.0.0)'
+	api 'brownshome:netcode:0.1.0-SNAPSHOT'
 
-	implementation 'brownshome:netcode:0.1.0-SNAPSHOT'
 	compileOnly 'brownshome:netcode-annotations:0.1.0-SNAPSHOT'
-
 	annotationProcessor 'brownshome:netcode-processor:0.1.0-SNAPSHOT'
 
 	runtimeOnly 'brownshome:logging-slf4j:1.0.1'

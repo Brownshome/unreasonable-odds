@@ -1,4 +1,4 @@
 @DefineSchema(name = "Session")
-package brownshome.unreasonableodds.session.net;
+package brownshome.unreasonableodds.packets.session;
 
 import brownshome.netcode.annotation.DefineSchema;

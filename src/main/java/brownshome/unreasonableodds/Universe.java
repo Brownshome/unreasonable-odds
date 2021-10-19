@@ -1,28 +1,35 @@
 package brownshome.unreasonableodds;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
+import brownshome.netcode.annotation.converter.Networkable;
 import brownshome.unreasonableodds.collision.CollisionDetector;
 import brownshome.unreasonableodds.components.Collidable;
 import brownshome.unreasonableodds.entites.Entity;
 import brownshome.unreasonableodds.history.BranchRecord;
 import brownshome.unreasonableodds.history.History;
+import brownshome.unreasonableodds.packets.converters.EntityConverter;
+import brownshome.unreasonableodds.packets.converters.InstantConverter;
+import brownshome.unreasonableodds.session.Id;
 
 /**
  * A single universe in the multiverse. This is an immutable object. The ordering of universes is based on the times that
  * they were split off from each other.
  */
-public class Universe implements Comparable<Universe> {
+public class Universe implements Comparable<Universe>, Networkable {
 	private final Instant now;
 	private final List<Entity> entities;
 	private final CollisionDetector collisionDetector;
 
 	private final History history;
 	private final BranchRecord branchRecord;
+	private final Id id;
 
-	protected Universe(Instant now, List<Entity> entities, History previousHistory, BranchRecord branchRecord, CollisionDetector collisionDetector) {
+	protected Universe(Id id, Instant now, List<Entity> entities, History previousHistory, BranchRecord branchRecord, CollisionDetector collisionDetector) {
+		this.id = id;
 		this.now = now;
 		this.entities = entities;
 		this.history = previousHistory.expandHistory(this);
@@ -30,8 +37,12 @@ public class Universe implements Comparable<Universe> {
 		this.collisionDetector = collisionDetector;
 	}
 
-	public static Universe createEmptyUniverse(Instant epoch) {
-		return new Universe(epoch, Collections.emptyList(), History.blankHistory(), BranchRecord.blankRecord(epoch), CollisionDetector.createDetector());
+	public static Universe createEmptyUniverse(Id id, Instant epoch) {
+		return new Universe(id, epoch, Collections.emptyList(), History.blankHistory(), BranchRecord.blankRecord(epoch), CollisionDetector.createDetector());
+	}
+
+	public final Id id() {
+		return id;
 	}
 
 	/**
@@ -50,10 +61,10 @@ public class Universe implements Comparable<Universe> {
 		return collisionDetector;
 	}
 
-	public Universe createHistoricalUniverse() {
+	public Universe createHistoricalUniverse(Rules rules) {
 		Builder builder = newBranchBuilder();
 		for (var e : entities) {
-			var historical = e.createHistoricalEntity();
+			var historical = e.createHistoricalEntity(rules);
 
 			if (historical != null) {
 				historical.addToBuilder(builder);
@@ -135,7 +146,7 @@ public class Universe implements Comparable<Universe> {
 		 * @return the new universe
 		 */
 		public Universe build() {
-			return new Universe(now, entities, history, branchRecord, collisionDetector());
+			return new Universe(id, now, entities, history, branchRecord, collisionDetector());
 		}
 	}
 
@@ -219,6 +230,25 @@ public class Universe implements Comparable<Universe> {
 	 * @return a universe step that can be used to further interact with the newly created universe
 	 */
 	public UniverseStep step(Multiverse.MultiverseStep multiverseStep) {
+		return step(id(), multiverseStep);
+	}
+
+	/**
+	 * Steps this universe forward within the context of a parent multiverse step, allocating it a new ID
+	 * @param multiverseStep the step
+	 * @return a universe step that can be used to further interact with the newly created universe
+	 */
+	public UniverseStep stepNew(Multiverse.MultiverseStep multiverseStep) {
+		return step(multiverseStep.multiverse().allocateUniverseId(), multiverseStep);
+	}
+
+	/**
+	 * Steps this universe forward within the context of a parent multiverse step
+	 * @param id the ID of the new universe
+	 * @param multiverseStep the step
+	 * @return a universe step that can be used to further interact with the newly created universe
+	 */
+	protected UniverseStep step(Id id, Multiverse.MultiverseStep multiverseStep) {
 		var step = new UniverseStep(multiverseStep);
 
 		for (var s : entities) {
@@ -249,5 +279,53 @@ public class Universe implements Comparable<Universe> {
 	 */
 	public final Instant beginning() {
 		return history.beginning();
+	}
+
+	public final List<Entity> entities() {
+		return entities;
+	}
+
+	@Override
+	public String toString() {
+		return "Universe (%d entities) @ %s".formatted(entities.size(), now);
+	}
+
+	@Override
+	public void write(ByteBuffer buffer) {
+		id.write(buffer);
+		InstantConverter.INSTANCE.write(buffer, now);
+
+		int length = entities.size();
+		assert length < (1 << Short.SIZE);
+		buffer.putShort((short) length);
+
+		for (var entity : entities) {
+			EntityConverter.INSTANCE.write(buffer, entity);
+		}
+	}
+
+	@Override
+	public int size() {
+		int size = 0;
+
+		size += id.size();
+		size += InstantConverter.INSTANCE.size(now);
+		size += Short.BYTES;
+
+		for (var entity : entities) {
+			size += entity.size();
+		}
+
+		return size;
+	}
+
+	@Override
+	public boolean isSizeExact() {
+		return false;
+	}
+
+	@Override
+	public boolean isSizeConstant() {
+		return false;
 	}
 }

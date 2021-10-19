@@ -1,40 +1,16 @@
 package brownshome.unreasonableodds.session;
 
-import java.nio.ByteBuffer;
-import java.util.List;
+import java.util.Collection;
 
-import brownshome.netcode.NetworkUtils;
-import brownshome.netcode.annotation.converter.Converter;
+import brownshome.unreasonableodds.Rules;
+import brownshome.unreasonableodds.player.Player;
 
-public abstract class Session implements AutoCloseable {
-	private static final ThreadLocal<Session> THREAD_SESSION = new ThreadLocal<>();
+public interface Session {
+	Collection<? extends Player> players();
 
-	public static Session getHost() {
-		return THREAD_SESSION.get();
-	}
-
-	public final void markThreadAsSessionThread() {
-		THREAD_SESSION.set(this);
-	}
-
-	protected String name = "";
-
-	protected Session(String name) {
-		this.name = name;
-	}
-
-	public final String name() {
-		return name;
-	}
-
-	public void name(String name) {
-		assert name != null;
-
-		this.name = name;
-	}
-
-	public abstract List<SessionPlayer> players();
-
-	@Override
-	public abstract void close();
+	/**
+	 * The rules of the current lobby
+	 * @return the rules
+	 */
+	Rules rules();
 }

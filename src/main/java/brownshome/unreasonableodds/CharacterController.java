@@ -6,7 +6,7 @@ import brownshome.unreasonableodds.entites.PlayerCharacter;
  * A functional interface used to pass player actions to the game
  */
 @FunctionalInterface
-public interface Player {
+public interface CharacterController {
 	/**
 	 * Performs actions
 	 * @param actions an object giving the player information and allowing them to perform actions. One and only one

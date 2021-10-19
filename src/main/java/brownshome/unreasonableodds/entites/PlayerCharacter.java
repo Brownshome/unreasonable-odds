@@ -1,12 +1,16 @@
 package brownshome.unreasonableodds.entites;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
 
-import brownshome.unreasonableodds.Player;
-import brownshome.unreasonableodds.Universe;
+import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.components.Position;
+import brownshome.unreasonableodds.packets.converters.DurationConverter;
+import brownshome.unreasonableodds.player.*;
+import brownshome.unreasonableodds.session.Id;
+import brownshome.unreasonableodds.session.NetworkGameSession;
 import brownshome.vecmath.Vec2;
 
 /**
@@ -14,25 +18,37 @@ import brownshome.vecmath.Vec2;
  * player.
  */
 public class PlayerCharacter extends Character {
-	private final Player player;
+	/**
+	 * Holds networking information about the player character
+	 */
+	private final GamePlayer player;
 	private final Duration timeTravelEnergy;
 
-	protected PlayerCharacter(Position position, Vec2 velocity, Player player, Duration timeTravelEnergy) {
+	protected PlayerCharacter(Position position, Vec2 velocity, GamePlayer player, Duration timeTravelEnergy) {
 		super(position, velocity);
 
 		this.player = player;
 		this.timeTravelEnergy = timeTravelEnergy;
 	}
 
-	public static PlayerCharacter createCharacter(Position position, Vec2 velocity, Player player, Duration timeTravelEnergy) {
-		return new PlayerCharacter(position, velocity, player, timeTravelEnergy);
+	@Override
+	protected final int id() {
+		return KnownEntities.PLAYER_CHARACTER.id();
 	}
 
-	public Player player() {
+	protected final boolean isNetworkProxy() {
+		return player instanceof ImportedGamePlayer;
+	}
+
+	protected final ImportedGamePlayer networkProxy() {
+		return (ImportedGamePlayer) player;
+	}
+
+	protected final GamePlayer player() {
 		return player;
 	}
 
-	public Duration timeTravelEnergy() {
+	public final Duration timeTravelEnergy() {
 		return timeTravelEnergy;
 	}
 
@@ -56,7 +72,7 @@ public class PlayerCharacter extends Character {
 
 			var newUniverseStep = step()
 					.timeTravel(instant)
-					.step(step().multiverseStep());
+					.stepNew(step().multiverseStep());
 
 			withTimeTravelEnergy(timeTravelEnergy.minus(distance))
 					.step(newUniverseStep);
@@ -107,26 +123,33 @@ public class PlayerCharacter extends Character {
 
 	@Override
 	protected Actions createActions(Universe.UniverseStep step) {
+		assert player instanceof ControllingPlayer;
+
 		var actions = new PlayerActions(step);
-		player.performActions(actions);
+		((ControllingPlayer) player).controller().performActions(actions);
 		return actions;
 	}
 
 	@Override
 	protected PlayerCharacter nextEntity(Universe.UniverseStep step) {
-		var next = (PlayerCharacter) super.nextEntity(step);
+		if (isNetworkProxy()) {
+			networkProxy().pushUniverse(step.universe());
+			return networkProxy().next(step);
+		} else {
+			var next = (PlayerCharacter) super.nextEntity(step);
 
-		if (next == null) {
-			return null;
+			if (next == null) {
+				return null;
+			}
+
+			double nanosGained = step.stepSize().toNanos() * step.rules().energyGainRate();
+			return next.withTimeTravelEnergy(next.timeTravelEnergy.plus(Duration.ofNanos((long) nanosGained)));
 		}
-
-		double nanosGained = step.stepSize().toNanos() * step.rules().energyGainRate();
-		return next.withTimeTravelEnergy(next.timeTravelEnergy.plus(Duration.ofNanos((long) nanosGained)));
 	}
 
 	@Override
-	public HistoricalCharacter createHistoricalEntity() {
-		return createHistoricalCharacter();
+	public HistoricalCharacter createHistoricalEntity(Rules rules) {
+		return rules.entities().createHistoricalCharacter(position(), velocity());
 	}
 
 	protected PlayerCharacter withTimeTravelEnergy(Duration energy) {
@@ -143,7 +166,34 @@ public class PlayerCharacter extends Character {
 		return new PlayerCharacter(position(), velocity, player, timeTravelEnergy);
 	}
 
-	protected HistoricalCharacter createHistoricalCharacter() {
-		return new HistoricalCharacter(position(), velocity());
+	protected PlayerCharacter(ByteBuffer buffer) {
+		super(buffer);
+
+		var session = NetworkGameSession.get();
+		this.player = session.player(new Id(buffer));
+		this.timeTravelEnergy = DurationConverter.INSTANCE.read(buffer);
+	}
+
+	@Override
+	public void write(ByteBuffer buffer) {
+		super.write(buffer);
+
+		((NetworkGamePlayer) player).id().write(buffer);
+		DurationConverter.INSTANCE.write(buffer, timeTravelEnergy);
+	}
+
+	@Override
+	public int size() {
+		return super.size() + ((NetworkGamePlayer) player).id().size() + DurationConverter.INSTANCE.size(timeTravelEnergy);
+	}
+
+	@Override
+	public boolean isSizeExact() {
+		return super.isSizeExact() && ((NetworkGamePlayer) player).id().isSizeExact() && DurationConverter.INSTANCE.isSizeExact(timeTravelEnergy);
+	}
+
+	@Override
+	public boolean isSizeConstant() {
+		return super.isSizeConstant() && ((NetworkGamePlayer) player).id().isSizeConstant() && DurationConverter.INSTANCE.isSizeConstant();
 	}
 }

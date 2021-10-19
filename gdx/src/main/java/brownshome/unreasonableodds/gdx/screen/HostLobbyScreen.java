@@ -1,26 +1,23 @@
 package brownshome.unreasonableodds.gdx.screen;
 
-import brownshome.unreasonableodds.gdx.*;
-import brownshome.unreasonableodds.session.HostSession;
-import com.badlogic.gdx.Gdx;
+import java.util.Random;
+
+import brownshome.unreasonableodds.gdx.ApplicationResources;
+import brownshome.unreasonableodds.session.HostLobbySession;
+
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 
 public class HostLobbyScreen extends LobbyScreen {
-	public HostLobbyScreen(ApplicationResources resources, HostSession session) {
+	public HostLobbyScreen(ApplicationResources resources, HostLobbySession session) {
 		super(resources, session);
 
 		var startGameButton = new TextButton("Start Game", resources.skin());
 		startGameButton.addListener(new ChangeListener() {
 			@Override
 			public void changed(ChangeEvent event, Actor actor) {
-				session.startGame(new GdxRules(resources))
-						.thenAccept(multiverse -> {
-							disposeSession(false);
-							nextScreen(new MultiverseScreen(resources, multiverse, player()));
-						});
+				session.startGame(new Random());
 			}
 		});
 

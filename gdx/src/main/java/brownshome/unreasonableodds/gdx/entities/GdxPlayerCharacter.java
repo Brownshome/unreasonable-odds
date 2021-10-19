@@ -1,14 +1,16 @@
 package brownshome.unreasonableodds.gdx.entities;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 
-import brownshome.unreasonableodds.Universe;
+import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.entites.Character;
 import brownshome.unreasonableodds.gdx.*;
+import brownshome.unreasonableodds.player.ControllingPlayer;
+import brownshome.unreasonableodds.player.GamePlayer;
 import brownshome.vecmath.MVec2;
 import brownshome.vecmath.Vec2;
 
-import brownshome.unreasonableodds.Player;
 import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.entites.*;
 
@@ -18,25 +20,44 @@ import com.badlogic.gdx.math.Affine2;
 
 public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 	private static final TextureRegionCache REGION_CACHE = new TextureRegionCache("character");
-	private static final Vec2 SIZE = Vec2.of(0.1, 0.1);
+	private static final Vec2 SIZE = Vec2.of(CHARACTER_RADIUS * 2, CHARACTER_RADIUS * 2);
 
 	private final RenderComponent renderComponent;
 
-	protected GdxPlayerCharacter(Position position, Vec2 velocity, Player player, Duration timeTravelEnergy, RenderComponent renderComponent) {
+	protected GdxPlayerCharacter(Position position,
+	                             Vec2 velocity,
+	                             GamePlayer player,
+	                             Duration timeTravelEnergy,
+	                             RenderComponent renderComponent) {
 		super(position, velocity, player, timeTravelEnergy);
 
 		this.renderComponent = renderComponent;
 	}
 
-	public static GdxPlayerCharacter createCharacter(Position position, Vec2 velocity, Player player, Duration timeTravelEnergy, ApplicationResources resources) {
+	public GdxPlayerCharacter(ByteBuffer buffer, ApplicationResources resources) {
+		super(buffer);
+
+		this.renderComponent = createRenderComponent(position(), resources);
+	}
+
+	public GdxPlayerCharacter(Position position,
+	                          Vec2 velocity,
+	                          GamePlayer player,
+	                          Duration timeTravelEnergy,
+	                          ApplicationResources resources) {
+		this(position, velocity, player, timeTravelEnergy, createRenderComponent(position, resources));
+	}
+
+	private static RenderComponent createRenderComponent(Position position, ApplicationResources resources) {
 		MVec2 renderPosition = position.position().copy();
 		renderPosition.add(-CHARACTER_RADIUS, -CHARACTER_RADIUS);
 
-		return new GdxPlayerCharacter(position, velocity, player, timeTravelEnergy, new RenderComponent(resources,
+		return new RenderComponent(resources,
 				REGION_CACHE.getTextureRegion(resources.atlas()),
 				SIZE,
-				new Position(renderPosition, position.orientation())));
+				new Position(renderPosition, position.orientation()));
 	}
+
 
 	public final RenderComponent renderComponent() {
 		return renderComponent;
@@ -48,8 +69,8 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 	}
 
 	@Override
-	protected JumpScar createJumpScar(Vec2 position, Duration jumpScarDuration) {
-		return new GdxJumpScar(position, jumpScarDuration, renderComponent.resources());
+	public GdxHistoricalCharacter createHistoricalEntity(Rules rules) {
+		return ((GdxEntityFactory) rules.entities()).createHistoricalCharacter(position(), velocity(), renderComponent);
 	}
 
 	@Override
@@ -75,18 +96,13 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 	}
 
 	@Override
-	protected HistoricalCharacter createHistoricalCharacter() {
-		return new GdxHistoricalCharacter(position(), velocity(), renderComponent);
-	}
-
-	@Override
 	public void addToBuilder(Universe.Builder builder) {
 		super.addToBuilder(builder);
 
 		var gdxBuilder = (GdxUniverse.Builder) builder;
 		gdxBuilder.addRenderable(this);
 
-		if (player() instanceof GdxPlayer) {
+		if (player() instanceof ControllingPlayer controllingPlayer && controllingPlayer.controller() instanceof GdxCharacterController) {
 			// This is the keyboard controlled one
 			gdxBuilder.flagUniverseAsActive();
 		}

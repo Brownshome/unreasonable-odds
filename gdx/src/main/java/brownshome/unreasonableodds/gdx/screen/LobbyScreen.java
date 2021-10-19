@@ -1,42 +1,41 @@
 package brownshome.unreasonableodds.gdx.screen;
 
 import brownshome.unreasonableodds.gdx.ApplicationResources;
-import brownshome.unreasonableodds.gdx.GdxPlayer;
-import brownshome.unreasonableodds.session.Session;
-
-import brownshome.unreasonableodds.session.SessionPlayer;
+import brownshome.unreasonableodds.gdx.GdxCharacterController;
+import brownshome.unreasonableodds.player.LobbyPlayer;
+import brownshome.unreasonableodds.session.*;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 
 public abstract class LobbyScreen extends StageScreen {
-	private final Session session;
-	private final List<SessionPlayer> playerList;
+	private final LocalPlayerLobbySession session;
+	private final List<LobbyPlayer> playerList;
 	private final Table rightPanel;
-	private final GdxPlayer player;
+	private final GdxCharacterController controller;
 
 	private boolean disposeSession = true;
 
-	public LobbyScreen(ApplicationResources resources, Session session) {
+	public LobbyScreen(ApplicationResources resources, LocalPlayerLobbySession session) {
 		super(resources);
 
 		this.session = session;
-		this.player = new GdxPlayer();
+		this.controller = new GdxCharacterController();
 
 		var root = new Table(resources.skin());
 		root.setFillParent(true);
 		stage().addActor(root);
 
 		playerList = new List<>(resources.skin());
-		playerList.setItems(session.players().toArray(SessionPlayer[]::new));
+		playerList.setItems(session.players().toArray(LobbyPlayer[]::new));
 
 		root.row().expand();
 
 		rightPanel = new Table(resources.skin());
 		rightPanel.add((Actor) null).pad(Value.percentWidth(0.1f)).colspan(2).spaceBottom(10.0f);
 
-		var nameField = new TextField(session.name(), resources.skin());
+		var nameField = new TextField(session.localPlayer().name(), resources.skin());
 		nameField.addListener(new InputListener() {
 			@Override
 			public boolean keyDown(InputEvent event, int keycode) {
@@ -47,7 +46,7 @@ public abstract class LobbyScreen extends StageScreen {
 				var newName = nameField.getText();
 
 				name(newName);
-				nameField.setText(session.name());
+				nameField.setText(session.localPlayer().name());
 
 				stage().setKeyboardFocus(null);
 				return true;
@@ -77,12 +76,12 @@ public abstract class LobbyScreen extends StageScreen {
 		return cell;
 	}
 
-	protected final void players(java.util.List<SessionPlayer> players) {
-		playerList.setItems(players.toArray(SessionPlayer[]::new));
+	protected final void players(java.util.Collection<? extends LobbyPlayer> players) {
+		playerList.setItems(players.toArray(LobbyPlayer[]::new));
 	}
 
-	protected final GdxPlayer player() {
-		return player;
+	protected final GdxCharacterController controller() {
+		return controller;
 	}
 
 	/**
@@ -90,10 +89,10 @@ public abstract class LobbyScreen extends StageScreen {
 	 * @param newName the new name
 	 */
 	protected void name(String newName) {
-		session.name(newName);
+		session.localPlayer().name(newName);
 	}
 
-	protected final Session session() {
+	protected final LocalPlayerLobbySession session() {
 		return session;
 	}
 
@@ -104,7 +103,7 @@ public abstract class LobbyScreen extends StageScreen {
 	@Override
 	public void dispose() {
 		if (disposeSession) {
-			session.close();
+			((NetworkSession) session).close();
 		}
 	}
 }

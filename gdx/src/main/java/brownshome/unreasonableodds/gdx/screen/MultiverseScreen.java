@@ -1,10 +1,13 @@
 package brownshome.unreasonableodds.gdx.screen;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.Random;
 
 import brownshome.unreasonableodds.Multiverse;
 import brownshome.unreasonableodds.gdx.*;
+import brownshome.unreasonableodds.session.NetworkSession;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
@@ -22,9 +25,9 @@ public class MultiverseScreen extends SubScreen {
 	private final ApplicationResources resources;
 	private final Multiverse multiverse;
 	private final OrthographicCamera camera;
-	private final GdxPlayer player;
+	private final GdxCharacterController player;
 
-	MultiverseScreen(ApplicationResources resources, Multiverse multiverse, GdxPlayer player) {
+	MultiverseScreen(ApplicationResources resources, Multiverse multiverse, GdxCharacterController player) {
 		this.resources = resources;
 		this.player = player;
 		this.multiverse = multiverse;
@@ -33,8 +36,8 @@ public class MultiverseScreen extends SubScreen {
 
 	MultiverseScreen(ApplicationResources resources, GdxRules rules) {
 		this.resources = resources;
-		this.player = new GdxPlayer();
-		this.multiverse = rules.createMultiverse(List.of(player));
+		this.player = new GdxCharacterController();
+		this.multiverse = null; //rules.createMultiverse(List.of(player), null, Instant.now(), new Random());
 		this.camera = new OrthographicCamera();
 	}
 
@@ -50,27 +53,15 @@ public class MultiverseScreen extends SubScreen {
 		Affine2 transform = new Affine2();
 
 		var universes = multiverse.universes();
-		universes.sort(null);
 
-		int index = 0;
 		for (var universe : universes) {
 			if (((GdxUniverse) universe).isActive()) {
-				break;
+
+				transform.scale(UNIVERSE_SIZE, UNIVERSE_SIZE);
+				transform.translate(-0.5f, -0.5f);
+
+				((GdxUniverse) universe).render(transform);
 			}
-
-			index++;
-		}
-
-		assert index != universes.size();
-
-		transform.scale(UNIVERSE_SIZE, UNIVERSE_SIZE);
-		transform.translate(-0.5f, -0.5f);
-		transform.preTranslate(-INTER_UNIVERSE_STRIDE * index, 0f);
-
-		for (var universe : universes) {
-			((GdxUniverse) universe).render(transform);
-
-			transform.preTranslate(INTER_UNIVERSE_STRIDE, 0f);
 		}
 
 		resources.batch().end();
@@ -97,10 +88,16 @@ public class MultiverseScreen extends SubScreen {
 	public void resume() { }
 
 	@Override
-	public void hide() { }
+	public void hide() {
+		dispose();
+	}
 
 	@Override
-	public void dispose() {	}
+	public void dispose() {
+		if (NetworkSession.get() != null) {
+			NetworkSession.get().close();
+		}
+	}
 
 	@Override
 	public boolean keyDown(int keycode) {

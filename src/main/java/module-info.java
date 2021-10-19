@@ -12,12 +12,11 @@ module brownshome.unreasonableodds {
 	exports brownshome.unreasonableodds.session;
 
 	requires transitive brownshome.vecmath;
-
-	requires static brownshome.netcode.annotation;
-
-	requires brownshome.netcode;
+	requires transitive brownshome.netcode;
 
 	// Reflection access to schema names
-	opens brownshome.unreasonableodds.session.net to brownshome.netcode;
-	opens brownshome.unreasonableodds.net to brownshome.netcode;
+	opens brownshome.unreasonableodds.packets.lobby to brownshome.netcode;
+	opens brownshome.unreasonableodds.packets.session to brownshome.netcode;
+	opens brownshome.unreasonableodds.packets.game to brownshome.netcode;
+	exports brownshome.unreasonableodds.player;
 }

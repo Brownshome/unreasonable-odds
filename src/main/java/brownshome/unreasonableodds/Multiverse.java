@@ -1,28 +1,65 @@
 package brownshome.unreasonableodds;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 import brownshome.unreasonableodds.entites.Entity;
+import brownshome.unreasonableodds.session.*;
 
 /**
  * The base class for the game, representing a collection of universes
  */
 public class Multiverse {
 	private final Rules rules;
+	private final GameSession session;
+	private final Instant epoch;
+
 	private List<Universe> universes;
 
-	protected Multiverse(Rules rules, List<Universe> universes) {
+	protected Multiverse(Rules rules, Instant epoch, List<Universe> universes, GameSession session) {
+		assert rules != null;
+		assert universes != null;
+
 		this.rules = rules;
 		this.universes = universes;
+		this.epoch = epoch;
+
+		if (isNetworked()) {
+			for (var universe : universes) {
+				network().registerNewUniverse(universe);
+			}
+		}
+
+		this.session = session;
 	}
 
-	public static Multiverse createMultiverse(Rules rules, List<Universe> universes) {
-		return new Multiverse(rules, universes);
+	public final Id allocateUniverseId() {
+		return session.allocateUniverseId();
 	}
 
 	public final List<Universe> universes() {
 		return universes;
+	}
+
+	/**
+	 * The rules of this game
+	 * @return the rules
+	 */
+	public final Rules rules() {
+		return rules;
+	}
+
+	public final NetworkGameSession network() {
+		return (NetworkGameSession) session;
+	}
+
+	public final boolean isNetworked() {
+		return session instanceof NetworkGameSession;
+	}
+
+	public final Instant epoch() {
+		return epoch;
 	}
 
 	/**
@@ -120,6 +157,10 @@ public class Multiverse {
 		var step = new MultiverseStep(stepSize) {
 			@Override
 			public void addUniverse(Universe universe) {
+				if (isNetworked()) {
+					network().registerNewUniverse(universe);
+				}
+
 				newUniverses.add(universe);
 			}
 
@@ -150,14 +191,6 @@ public class Multiverse {
 		}
 
 		universes = newUniverses;
-	}
-
-	/**
-	 * The rules of this game
-	 * @return the rules
-	 */
-	public final Rules rules() {
-		return rules;
 	}
 
 	/**

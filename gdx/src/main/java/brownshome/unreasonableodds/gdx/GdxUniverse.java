@@ -11,6 +11,7 @@ import brownshome.unreasonableodds.gdx.components.RenderComponent;
 import brownshome.unreasonableodds.gdx.components.Renderable;
 import brownshome.unreasonableodds.history.BranchRecord;
 import brownshome.unreasonableodds.history.History;
+import brownshome.unreasonableodds.session.Id;
 import brownshome.vecmath.Rot2;
 import brownshome.vecmath.Vec2;
 import com.badlogic.gdx.math.Affine2;
@@ -23,7 +24,8 @@ public class GdxUniverse extends Universe implements Renderable {
 	private final RenderComponent renderComponent;
 	private final boolean isActive;
 
-	protected GdxUniverse(Instant now,
+	protected GdxUniverse(Id id,
+	                      Instant now,
 	                      List<Entity> entities,
 	                      History previousHistory,
 	                      BranchRecord branchRecord,
@@ -31,17 +33,18 @@ public class GdxUniverse extends Universe implements Renderable {
 	                      List<Renderable> subComponents,
 	                      RenderComponent renderComponent,
 	                      boolean isActive) {
-		super(now, entities, previousHistory, branchRecord, collisionDetector);
+		super(id, now, entities, previousHistory, branchRecord, collisionDetector);
 
 		this.renderables = subComponents;
 		this.renderComponent = renderComponent;
 		this.isActive = isActive;
 	}
 
-	public static GdxUniverse createEmptyUniverse(Instant beginning, ApplicationResources resources) {
+	public static GdxUniverse createEmptyUniverse(Id id, Instant beginning, ApplicationResources resources) {
 		var renderComponent = new RenderComponent(resources, TEXTURE_REGION_CACHE.getTextureRegion(resources.atlas()), SIZE, new Position(Vec2.ZERO, Rot2.IDENTITY));
 
-		return new GdxUniverse(beginning,
+		return new GdxUniverse(id,
+				beginning,
 				Collections.emptyList(),
 				History.blankHistory(),
 				BranchRecord.blankRecord(beginning),
@@ -84,7 +87,7 @@ public class GdxUniverse extends Universe implements Renderable {
 
 		@Override
 		public Universe build() {
-			return new GdxUniverse(now(), entities(), history(), branchRecord(), collisionDetector(), renderables, renderComponent, isActive);
+			return new GdxUniverse(id(), now(), entities(), history(), branchRecord(), collisionDetector(), renderables, renderComponent, isActive);
 		}
 	}
 

@@ -1,12 +1,12 @@
 package brownshome.unreasonableodds.entites;
 
-import java.time.Duration;
+import java.nio.ByteBuffer;
 import java.time.Instant;
 
 import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.collision.CollisionDetector;
-import brownshome.unreasonableodds.components.CollisionShape;
 import brownshome.unreasonableodds.components.*;
+import brownshome.unreasonableodds.packets.converters.Vec2Converter;
 import brownshome.vecmath.MVec2;
 import brownshome.vecmath.Vec2;
 
@@ -99,7 +99,7 @@ public abstract class Character extends Entity implements Positioned, Collidable
 		 * Jumps the character out of this universe.
 		 */
 		protected final void jumpOutOfUniverse() {
-			createJumpScar(position().position(), step.rules().jumpScarDuration()).addToBuilder(step.builder());
+			rules().entities().createJumpScar(position().position(), step.rules().jumpScarDuration()).addToBuilder(step.builder());
 			setNext(null);
 		}
 
@@ -238,16 +238,6 @@ public abstract class Character extends Entity implements Positioned, Collidable
 	}
 
 	/**
-	 * Creates a jump scar at the given position and with the given duration remaining
-	 * @param position the position to create the jump scar
-	 * @param jumpScarDuration the duration remaining of the jump scar
-	 * @return the jump scar
-	 */
-	protected JumpScar createJumpScar(Vec2 position, Duration jumpScarDuration) {
-		return new JumpScar(position, jumpScarDuration);
-	}
-
-	/**
 	 * Creates a new character identical to this one, but with a given velocity
 	 * @param velocity the velocity
 	 * @return a new character
@@ -255,4 +245,31 @@ public abstract class Character extends Entity implements Positioned, Collidable
 	protected abstract Character withVelocity(Vec2 velocity);
 
 	protected abstract Character withPosition(Position position);
+
+	protected Character(ByteBuffer buffer) {
+		this(new Position(buffer), Vec2Converter.INSTANCE.read(buffer));
+	}
+
+	@Override
+	public void write(ByteBuffer buffer) {
+		super.write(buffer);
+
+		position.write(buffer);
+		Vec2Converter.INSTANCE.write(buffer, velocity);
+	}
+
+	@Override
+	public int size() {
+		return super.size() + position.size() + Vec2Converter.INSTANCE.size(velocity);
+	}
+
+	@Override
+	public boolean isSizeExact() {
+		return super.isSizeExact() && position.isSizeExact() && Vec2Converter.INSTANCE.isSizeExact(velocity);
+	}
+
+	@Override
+	public boolean isSizeConstant() {
+		return super.isSizeConstant() && position().isSizeConstant() && Vec2Converter.INSTANCE.isSizeConstant();
+	}
 }

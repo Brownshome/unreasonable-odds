@@ -1,5 +1,6 @@
 package brownshome.unreasonableodds.gdx.entities;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 
 import brownshome.unreasonableodds.Universe;
@@ -19,16 +20,26 @@ public class GdxJumpScar extends JumpScar implements Renderable {
 	private final RenderComponent renderComponent;
 
 	protected GdxJumpScar(Vec2 position, Duration jumpScarDuration, ApplicationResources resources) {
-		this(position, jumpScarDuration, new RenderComponent(resources,
-				REGION_CACHE.getTextureRegion(resources.atlas()),
-				SCAR_SIZE,
-				new Position(position, Rot2.IDENTITY)));
+		this(position, jumpScarDuration, createRenderComponent(position, resources));
 	}
 
 	protected GdxJumpScar(Vec2 position, Duration lifetime, RenderComponent renderComponent) {
 		super(position, lifetime);
 
 		this.renderComponent = renderComponent;
+	}
+
+	public GdxJumpScar(ByteBuffer buffer, ApplicationResources resources) {
+		super(buffer);
+
+		this.renderComponent = createRenderComponent(position(), resources);
+	}
+
+	private static RenderComponent createRenderComponent(Vec2 position, ApplicationResources resources) {
+		return new RenderComponent(resources,
+				REGION_CACHE.getTextureRegion(resources.atlas()),
+				SCAR_SIZE,
+				new Position(position, Rot2.IDENTITY));
 	}
 
 	public final RenderComponent renderComponent() {

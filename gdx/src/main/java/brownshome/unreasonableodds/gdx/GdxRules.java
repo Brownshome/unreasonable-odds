@@ -1,15 +1,19 @@
 package brownshome.unreasonableodds.gdx;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
-import java.util.List;
+import java.time.Instant;
 import java.util.Random;
 
-import brownshome.unreasonableodds.*;
+import brownshome.unreasonableodds.Rules;
+import brownshome.unreasonableodds.Universe;
 import brownshome.unreasonableodds.components.Position;
-import brownshome.unreasonableodds.gdx.entities.GdxPlayerCharacter;
+import brownshome.unreasonableodds.gdx.entities.GdxEntityFactory;
 import brownshome.unreasonableodds.gdx.generation.GdxClosedTileType;
 import brownshome.unreasonableodds.gdx.generation.GdxOpenTileType;
+import brownshome.unreasonableodds.gdx.session.GdxLobbySession;
 import brownshome.unreasonableodds.generation.TileType;
+import brownshome.unreasonableodds.session.Id;
 import brownshome.vecmath.Rot2;
 import brownshome.vecmath.Vec2;
 
@@ -17,17 +21,18 @@ public final class GdxRules extends Rules {
 	private final ApplicationResources resources;
 
 	public GdxRules(ApplicationResources resources) {
+		super(new GdxEntityFactory(resources));
+
 		this.resources = resources;
 	}
 
-	@Override
-	public GdxPlayerCharacter createPlayerCharacter(Position position, Player player, Duration timeTravelEnergy) {
-		return GdxPlayerCharacter.createCharacter(position, Vec2.ZERO, player, timeTravelEnergy, resources);
+	public GdxRules(ByteBuffer buffer) {
+		this(GdxLobbySession.get().applicationResources());
 	}
 
 	@Override
-	protected GdxUniverse.Builder universeBuilder() {
-		return (GdxUniverse.Builder) GdxUniverse.createEmptyUniverse(epoch(), resources).builder(Duration.ZERO);
+	protected GdxUniverse.Builder universeBuilder(Id id, Instant epoch) {
+		return (GdxUniverse.Builder) GdxUniverse.createEmptyUniverse(id, epoch, resources).builder(Duration.ZERO);
 	}
 
 	@Override

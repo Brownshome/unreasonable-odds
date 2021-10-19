@@ -1,13 +1,16 @@
 package brownshome.unreasonableodds.gdx.screen;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.util.List;
+import java.util.Collection;
+import java.util.Map;
 
-import brownshome.unreasonableodds.Player;
-import brownshome.unreasonableodds.gdx.ApplicationResources;
-import brownshome.unreasonableodds.session.HostSession;
+import brownshome.netcode.udp.UDPConnection;
+import brownshome.netcode.udp.UDPConnectionManager;
+import brownshome.unreasonableodds.*;
+import brownshome.unreasonableodds.gdx.*;
+import brownshome.unreasonableodds.player.NetworkGamePlayer;
+import brownshome.unreasonableodds.session.*;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
@@ -42,22 +45,47 @@ public class HostScreen extends StageScreen {
 			public void clicked(InputEvent event, float x, float y) {
 				int p = Integer.decode(port.getText());
 				try {
-					var session = new HostSession(name.getText(), p, Gdx.app::postRunnable) {
+					var session = new HostLobbySession(new GdxRules(resources), name.getText(), p, Gdx.app::postRunnable) {
 						final HostLobbyScreen ui = new HostLobbyScreen(resources, this);
 
 						{ markThreadAsSessionThread(); }
 
 						@Override
-						protected void onPlayersChanged() {
+						public void onPlayersChanged() {
 							super.onPlayersChanged();
 							ui.players(players());
 						}
 
 						@Override
-						protected List<Player> createPlayers() {
-							var list = super.createPlayers();
-							list.add(ui.player());
-							return list;
+						public GdxCharacterController localController() {
+							return ui.controller();
+						}
+
+						@Override
+						protected NetworkGameSession.Builder gameSessionBuilder() {
+							// TODO james.brown [19-10-2021] This is quite gross, maybe this needs a refactor
+							return new NetworkGameSession.Builder(this) {
+								@Override
+								protected NetworkGameSession build(UDPConnectionManager connectionManager,
+								                                   Rules rules,
+								                                   Map<Id, NetworkGamePlayer> players,
+								                                   Map<Id, UniverseInfo> universes,
+								                                   Collection<UDPConnection> connections,
+								                                   UDPConnection universeRegistrar) {
+									return new NetworkGameSession(connectionManager,
+											rules,
+											players,
+											universes,
+											connections,
+											universeRegistrar) {
+										@Override
+										public void startGame(Multiverse multiverse) {
+											ui.disposeSession(false);
+											ui.nextScreen(new MultiverseScreen(resources, multiverse, localController()));
+										}
+									};
+								}
+							};
 						}
 					};
 
