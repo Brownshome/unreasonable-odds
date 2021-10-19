@@ -8,7 +8,7 @@ import brownshome.netcode.udp.UDPConnection;
 import brownshome.unreasonableodds.Universe;
 import brownshome.unreasonableodds.entites.Entity;
 import brownshome.unreasonableodds.entites.PlayerCharacter;
-import brownshome.unreasonableodds.packets.game.*;
+import brownshome.unreasonableodds.packets.game.UniversePacket;
 import brownshome.unreasonableodds.session.Id;
 
 /**
@@ -40,7 +40,7 @@ public class ImportedGamePlayer extends NetworkGamePlayer {
 	}
 
 	public final void pushUniverse(Universe universe) {
-		controllingConnection.send(new UniversePacket(null, universe));
+		gameStarted().thenRun(() -> controllingConnection.send(new UniversePacket(null, universe)));
 	}
 
 	public PlayerCharacter next(Universe.UniverseStep step) {
@@ -53,11 +53,5 @@ public class ImportedGamePlayer extends NetworkGamePlayer {
 	protected void next(PlayerCharacter next, Collection<Entity> newEntities) {
 		this.next = next;
 		this.newEntities = newEntities;
-	}
-
-	public void startGame(Universe initialUniverse) {
-		controllingConnection.send(new StartGamePacket(null, initialUniverse.beginning())).thenRun(() -> {
-			pushUniverse(initialUniverse);
-		});
 	}
 }

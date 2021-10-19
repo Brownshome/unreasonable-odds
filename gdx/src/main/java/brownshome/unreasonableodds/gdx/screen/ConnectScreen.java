@@ -3,12 +3,18 @@ package brownshome.unreasonableodds.gdx.screen;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.Map;
 
 import browngu.logging.Logger;
-import brownshome.unreasonableodds.CharacterController;
-import brownshome.unreasonableodds.gdx.ApplicationResources;
+import brownshome.netcode.udp.UDPConnection;
+import brownshome.netcode.udp.UDPConnectionManager;
+import brownshome.unreasonableodds.*;
+import brownshome.unreasonableodds.gdx.*;
 import brownshome.unreasonableodds.gdx.session.GdxLobbySession;
-import brownshome.unreasonableodds.session.ClientLobbySession;
+import brownshome.unreasonableodds.player.NetworkGamePlayer;
+import brownshome.unreasonableodds.session.*;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
@@ -55,18 +61,37 @@ public class ConnectScreen extends StageScreen {
 								ui.nextScreen(new TopMenuScreen(resources));
 							}
 
-							/*@Override
-							public void startGame(Instant startTime, List<Entity> entities) {
-								assert rules() instanceof GdxRules;
+							@Override
+							protected NetworkGameSession.Builder gameSessionBuilder() {
+								// TODO james.brown [19-10-2021] This is quite gross, maybe this needs a refactor
+								return new NetworkGameSession.Builder(this) {
+									@Override
+									protected NetworkGameSession build(UDPConnectionManager connectionManager,
+									                                   Rules rules,
+									                                   Map<Id, NetworkGamePlayer> players,
+									                                   Map<Id, UniverseInfo> universes,
+									                                   Collection<UDPConnection> connections,
+									                                   UDPConnection universeRegistrar) {
+										return new NetworkGameSession(connectionManager,
+												rules,
+												players,
+												universes,
+												connections,
+												universeRegistrar) {
+											@Override
+											public void startGame(Multiverse multiverse) {
+												assert rules() instanceof GdxRules;
 
-								var multiverse = rules().createMultiverse(entities, ui.player(), new MultiverseNetwork.Builder(this, rules()).build(), startTime, new Random());
-
-								ui.disposeSession(false);
-								ui.nextScreen(new MultiverseScreen(resources, multiverse, ui.player()));
-							}*/
+												ui.disposeSession(false);
+												ui.nextScreen(new MultiverseScreen(resources, multiverse, localController()));
+											}
+										};
+									}
+								};
+							}
 
 							@Override
-							public CharacterController localController() {
+							public GdxCharacterController localController() {
 								return ui.controller();
 							}
 

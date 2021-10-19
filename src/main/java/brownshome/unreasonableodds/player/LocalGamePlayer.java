@@ -1,6 +1,8 @@
 package brownshome.unreasonableodds.player;
 
+import brownshome.netcode.udp.UDPConnection;
 import brownshome.unreasonableodds.CharacterController;
+import brownshome.unreasonableodds.Universe;
 import brownshome.unreasonableodds.session.Id;
 
 public class LocalGamePlayer extends NetworkGamePlayer implements ControllingPlayer {
@@ -14,6 +16,11 @@ public class LocalGamePlayer extends NetworkGamePlayer implements ControllingPla
 		super(name, id);
 
 		this.controller = controller;
+	}
+
+	@Override
+	public final void startGame(Universe initialUniverse, UDPConnection connection) {
+		throw new AssertionError("This method must not be called for local players");
 	}
 
 	@Override

@@ -45,11 +45,14 @@ public class EntityFactory {
 			case HISTORICAL_CHARACTER -> new HistoricalCharacter(buffer);
 			case JUMP_SCAR -> new JumpScar(buffer);
 			case PLAYER_CHARACTER -> new PlayerCharacter(buffer);
-			case STATIC_MAP -> NetworkGameSession.get().computeStaticMapIfAbsent(() -> createStaticMap(readTiles(buffer)));
-		};
-	}
+			case STATIC_MAP -> {
+				var session = NetworkGameSession.get();
+				if (session.map() == null) {
+					session.map(new StaticMap(buffer));
+				}
 
-	protected List<Tile> readTiles(ByteBuffer buffer) {
-		return Collections.emptyList();
+				yield session.map();
+			}
+		};
 	}
 }

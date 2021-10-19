@@ -9,7 +9,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import brownshome.netcode.udp.UDPConnectionManager;
-import brownshome.unreasonableodds.*;
+import brownshome.unreasonableodds.Rules;
+import brownshome.unreasonableodds.Universe;
 import brownshome.unreasonableodds.packets.lobby.*;
 import brownshome.unreasonableodds.packets.session.LeaveSessionPacket;
 import brownshome.unreasonableodds.player.*;
@@ -157,19 +158,35 @@ public abstract class HostLobbySession extends NetworkLobbySession implements Lo
 
 		CompletableFuture.allOf(players.values().stream()
 				.map(ImportedLobbyPlayer::timeSyncComplete).toArray(CompletableFuture[]::new)
-		).thenAccept(v -> {
-			var builder = gameSessionBuilder();
+		).thenRun(() -> {
+			var epoch = rules.gameStartTime();
 
+			var builder = gameSessionBuilder();
 			builder.addPlayer(LocalGamePlayer.create(localPlayer, localController()));
 
 			for (var player : players.values()) {
-				builder.addPlayer(ImportedGamePlayer.create(player));
+				builder.addPlayer(NetworkGamePlayer.create(player));
 				builder.addConnection(player.connection());
 			}
 
 			var gameSession = builder.build();
 
-			rules.createMultiverse(gameSession, rules.gameStartTime(), random);
+			var map = rules.generateStaticMap(random);
+			gameSession.map(map);
+
+			var universes = new ArrayList<Universe>();
+			for (var player : gameSession.players()) {
+				var universe = rules.createUniverse(gameSession, player, epoch, random);
+
+				if (player instanceof LocalGamePlayer) {
+					universes.add(universe);
+				} else {
+					var connection = player(player.id()).connection();
+					player.startGame(universe, connection);
+				}
+			}
+
+			gameSession.startGame(rules.createMultiverse(universes, gameSession, epoch));
 		});
 	}
 

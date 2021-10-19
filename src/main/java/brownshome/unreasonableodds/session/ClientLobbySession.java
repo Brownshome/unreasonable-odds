@@ -8,7 +8,7 @@ import java.util.concurrent.Executor;
 
 import brownshome.netcode.udp.UDPConnection;
 import brownshome.netcode.udp.UDPConnectionManager;
-import brownshome.unreasonableodds.Rules;
+import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.packets.lobby.SetNamePacket;
 import brownshome.unreasonableodds.packets.lobby.SetReadyStatePacket;
 import brownshome.unreasonableodds.packets.session.LeaveSessionPacket;
@@ -104,7 +104,7 @@ public abstract class ClientLobbySession extends NetworkLobbySession implements 
 		hostConnection.send(new SetReadyStatePacket(null, (byte) 0, localPlayer.ready()));
 	}
 
-	public void startGame(Instant startTime, UDPConnection universeRegistrar) {
+	public NetworkGameSession makeGameSession(UDPConnection universeRegistrar) {
 		var builder = gameSessionBuilder();
 		builder.makeClientSession(universeRegistrar);
 
@@ -114,7 +114,7 @@ public abstract class ClientLobbySession extends NetworkLobbySession implements 
 			builder.addPlayer(NetworkGamePlayer.create(player));
 		}
 
-		rules().createMultiverse(builder.build(), startTime, new Random());
+		return builder.build();
 	}
 
 	@Override

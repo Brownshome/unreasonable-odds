@@ -1,5 +1,6 @@
 package brownshome.unreasonableodds.gdx.entities;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 
 import brownshome.unreasonableodds.*;
@@ -33,19 +34,30 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 		this.renderComponent = renderComponent;
 	}
 
-	public static GdxPlayerCharacter createCharacter(Position position,
-	                                                 Vec2 velocity,
-	                                                 GamePlayer player,
-	                                                 Duration timeTravelEnergy,
-	                                                 ApplicationResources resources) {
+	public GdxPlayerCharacter(ByteBuffer buffer, ApplicationResources resources) {
+		super(buffer);
+
+		this.renderComponent = createRenderComponent(position(), resources);
+	}
+
+	public GdxPlayerCharacter(Position position,
+	                          Vec2 velocity,
+	                          GamePlayer player,
+	                          Duration timeTravelEnergy,
+	                          ApplicationResources resources) {
+		this(position, velocity, player, timeTravelEnergy, createRenderComponent(position, resources));
+	}
+
+	private static RenderComponent createRenderComponent(Position position, ApplicationResources resources) {
 		MVec2 renderPosition = position.position().copy();
 		renderPosition.add(-CHARACTER_RADIUS, -CHARACTER_RADIUS);
 
-		return new GdxPlayerCharacter(position, velocity, player, timeTravelEnergy, new RenderComponent(resources,
+		return new RenderComponent(resources,
 				REGION_CACHE.getTextureRegion(resources.atlas()),
 				SIZE,
-				new Position(renderPosition, position.orientation())));
+				new Position(renderPosition, position.orientation()));
 	}
+
 
 	public final RenderComponent renderComponent() {
 		return renderComponent;

@@ -1,6 +1,6 @@
 package brownshome.unreasonableodds.entites;
 
-enum KnownEntities {
+public enum KnownEntities {
 	HISTORICAL_CHARACTER,
 	JUMP_SCAR,
 	PLAYER_CHARACTER,

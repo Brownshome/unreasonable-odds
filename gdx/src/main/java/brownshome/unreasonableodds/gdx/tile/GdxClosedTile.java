@@ -1,5 +1,7 @@
 package brownshome.unreasonableodds.gdx.tile;
 
+import java.nio.ByteBuffer;
+
 import brownshome.unreasonableodds.Universe;
 import brownshome.unreasonableodds.components.AABBCollisionShape;
 import brownshome.unreasonableodds.components.Position;
@@ -21,15 +23,23 @@ public class GdxClosedTile extends ClosedTile implements Renderable {
 		this.renderComponent = renderComponent;
 	}
 
-	public static GdxClosedTile createTile(Vec2 lesser, Vec2 greater, ApplicationResources resources) {
+	public GdxClosedTile(Vec2 lesser, Vec2 greater, ApplicationResources resources) {
+		this(new AABBCollisionShape(lesser, greater), createRenderComponent(lesser, greater, resources));
+	}
+
+	public GdxClosedTile(ByteBuffer buffer, ApplicationResources resources) {
+		super(buffer);
+		this.renderComponent = createRenderComponent(lesserExtent(), greaterExtent(), resources);
+	}
+
+	private static RenderComponent createRenderComponent(Vec2 lesser, Vec2 greater, ApplicationResources resources) {
 		var scale = greater.copy();
 		scale.subtract(lesser);
 
-		return new GdxClosedTile(new AABBCollisionShape(lesser, greater),
-				new RenderComponent(resources,
-						TEXTURE_REGION_CACHE.getTextureRegion(resources.atlas()),
-						scale,
-						new Position(lesser, Rot2.IDENTITY)));
+		return new RenderComponent(resources,
+				TEXTURE_REGION_CACHE.getTextureRegion(resources.atlas()),
+				scale,
+				new Position(lesser, Rot2.IDENTITY));
 	}
 
 	@Override

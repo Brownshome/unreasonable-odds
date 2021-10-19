@@ -25,6 +25,6 @@ public final class GdxClosedTileType implements TileType {
 
 	@Override
 	public Tile createTile(int x, int y) {
-		return GdxClosedTile.createTile(Vec2.of(x / 8.0, y / 8.0), Vec2.of((x + 1.0) / 8.0, (y + 1.0) / 8.0), resources);
+		return new GdxClosedTile(Vec2.of(x / 8.0, y / 8.0), Vec2.of((x + 1.0) / 8.0, (y + 1.0) / 8.0), resources);
 	}
 }

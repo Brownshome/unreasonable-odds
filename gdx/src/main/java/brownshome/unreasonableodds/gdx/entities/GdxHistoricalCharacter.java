@@ -1,5 +1,7 @@
 package brownshome.unreasonableodds.gdx.entities;
 
+import java.nio.ByteBuffer;
+
 import brownshome.unreasonableodds.Universe;
 import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.entites.HistoricalCharacter;
@@ -16,14 +18,24 @@ public class GdxHistoricalCharacter extends HistoricalCharacter implements Rende
 
 	private final RenderComponent renderComponent;
 
-	public static GdxHistoricalCharacter create(Position position, Vec2 velocity, ApplicationResources resources) {
+	public GdxHistoricalCharacter(ByteBuffer buffer, ApplicationResources resources) {
+		super(buffer);
+
+		this.renderComponent = createRenderComponent(position(), resources);
+	}
+
+	public GdxHistoricalCharacter(Position position, Vec2 velocity, ApplicationResources resources) {
+		this(position, velocity, createRenderComponent(position, resources));
+	}
+
+	private static RenderComponent createRenderComponent(Position position, ApplicationResources resources) {
 		MVec2 renderPosition = position.position().copy();
 		renderPosition.add(-CHARACTER_RADIUS, -CHARACTER_RADIUS);
 
-		return new GdxHistoricalCharacter(position, velocity, new RenderComponent(resources,
+		return new RenderComponent(resources,
 				REGION_CACHE.getTextureRegion(resources.atlas()),
 				SIZE,
-				new Position(renderPosition, position.orientation())));
+				new Position(renderPosition, position.orientation()));
 	}
 
 	protected GdxHistoricalCharacter(Position position, Vec2 velocity, RenderComponent renderComponent) {

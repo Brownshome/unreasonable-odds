@@ -14,25 +14,14 @@ import brownshome.unreasonableodds.entites.StaticMap;
 import brownshome.unreasonableodds.packets.game.GameSchema;
 import brownshome.unreasonableodds.packets.game.SetUniverseHostPacket;
 import brownshome.unreasonableodds.packets.session.SessionSchema;
-import brownshome.unreasonableodds.player.*;
+import brownshome.unreasonableodds.player.NetworkGamePlayer;
 
 public class NetworkGameSession extends NetworkSession implements GameSession {
 	private final Map<Id, NetworkGamePlayer> players;
 	private final AtomicInteger nextUniverseId = new AtomicInteger();
 	private final Rules rules;
 
-	protected record UniverseInfo(Universe universe, InetSocketAddress hostAddress) {
-		UniverseInfo withHostAddress(InetSocketAddress hostAddress) {
-			return new UniverseInfo(universe, hostAddress);
-		}
-
-		UniverseInfo withUniverse(Universe universe) {
-			return new UniverseInfo(universe, hostAddress);
-		}
-
-	}
-
-	private final Map<Id, UniverseInfo> universes;
+	private final Map<Id, Builder.UniverseInfo> universes;
 
 	private final UDPConnection universeRegistrar;
 	private final Collection<UDPConnection> connections;
@@ -48,7 +37,7 @@ public class NetworkGameSession extends NetworkSession implements GameSession {
 	protected NetworkGameSession(UDPConnectionManager connectionManager,
 	                             Rules rules,
 	                             Map<Id, NetworkGamePlayer> players,
-	                             Map<Id, UniverseInfo> universes,
+	                             Map<Id, Builder.UniverseInfo> universes,
 	                             Collection<UDPConnection> connections,
 	                             UDPConnection universeRegistrar) {
 		super(connectionManager);
@@ -63,11 +52,21 @@ public class NetworkGameSession extends NetworkSession implements GameSession {
 		this.connections = connections;
 	}
 
-	public static final class Builder {
+	public static class Builder {
 		private final UDPConnectionManager connectionManager;
 		private final Map<Id, NetworkGamePlayer> players;
 		private final Map<Id, UniverseInfo> universes;
 		private final Rules rules;
+
+		protected record UniverseInfo(Universe universe, InetSocketAddress hostAddress) {
+			UniverseInfo withHostAddress(InetSocketAddress hostAddress) {
+				return new UniverseInfo(universe, hostAddress);
+			}
+
+			UniverseInfo withUniverse(Universe universe) {
+				return new UniverseInfo(universe, hostAddress);
+			}
+		}
 
 		/**
 		 * All connected addresses
@@ -99,10 +98,28 @@ public class NetworkGameSession extends NetworkSession implements GameSession {
 			players.put(player.id(), player);
 		}
 
-		public NetworkGameSession build() {
-			var session = new NetworkGameSession(connectionManager, rules, players, universes, connections, universeRegistrar);
+		protected void setupSession(NetworkGameSession session) {
 			session.sessionId(sessionId);
 			session.markThreadAsSessionThread();
+		}
+
+		protected NetworkGameSession build(UDPConnectionManager connectionManager,
+		                                   Rules rules,
+		                                   Map<Id, NetworkGamePlayer> players,
+		                                   Map<Id, UniverseInfo> universes,
+		                                   Collection<UDPConnection> connections,
+		                                   UDPConnection universeRegistrar) {
+			return new NetworkGameSession(connectionManager, rules, players, universes, connections, universeRegistrar);
+		}
+
+		public final NetworkGameSession build() {
+			var session = build(connectionManager,
+					rules,
+					players,
+					universes,
+					connections,
+					universeRegistrar);
+			setupSession(session);
 			return session;
 		}
 	}
@@ -135,7 +152,7 @@ public class NetworkGameSession extends NetworkSession implements GameSession {
 
 	public final void universe(Universe universe, InetSocketAddress sender) {
 		universes.compute(universe.id(), (id, universeInfo) -> universeInfo == null
-				? new UniverseInfo(universe, sender)
+				? new Builder.UniverseInfo(universe, sender)
 				: universeInfo.withUniverse(universe));
 	}
 
@@ -152,7 +169,7 @@ public class NetworkGameSession extends NetworkSession implements GameSession {
 		return new Id(sessionId(), nextUniverseId.getAndIncrement());
 	}
 
-	public final void startGame(Multiverse multiverse) { }
+	public void startGame(Multiverse multiverse) { }
 
 	/**
 	 * Called when this session creates a new universe
@@ -167,7 +184,7 @@ public class NetworkGameSession extends NetworkSession implements GameSession {
 	}
 
 	public final void setUniverseHost(Id id, InetSocketAddress hostAddress) {
-		universes.compute(id, (i, universeInfo) -> universeInfo == null ? new UniverseInfo(null, hostAddress) : universeInfo.withHostAddress(hostAddress));
+		universes.compute(id, (i, universeInfo) -> universeInfo == null ? new Builder.UniverseInfo(null, hostAddress) : universeInfo.withHostAddress(hostAddress));
 
 		if (isUniverseRegistrar()) {
 			var packet = new SetUniverseHostPacket(null, id, hostAddress);
@@ -185,11 +202,11 @@ public class NetworkGameSession extends NetworkSession implements GameSession {
 		return List.of(new BaseSchema(), new SessionSchema(), new GameSchema());
 	}
 
-	public StaticMap computeStaticMapIfAbsent(Supplier<StaticMap> func) {
-		if (map == null) {
-			map = func.get();
-		}
-
+	public final StaticMap map() {
 		return map;
+	}
+
+	public void map(StaticMap map) {
+		this.map = map;
 	}
 }
