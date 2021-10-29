@@ -1,11 +1,10 @@
 package brownshome.unreasonableodds.gdx.screen;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
-import brownshome.netcode.udp.UDPConnection;
 import brownshome.netcode.udp.UDPConnectionManager;
 import brownshome.unreasonableodds.*;
 import brownshome.unreasonableodds.gdx.*;
@@ -62,22 +61,19 @@ public class HostScreen extends StageScreen {
 						}
 
 						@Override
-						protected NetworkGameSession.Builder gameSessionBuilder() {
+						protected NetworkGameSession.Builder gameSessionBuilder(Map<InetSocketAddress, SessionId> sessionIds) {
 							// TODO james.brown [19-10-2021] This is quite gross, maybe this needs a refactor
-							return new NetworkGameSession.Builder(this) {
+							return new NetworkGameSession.Builder(connectionManager(), rules(), sessionId(), sessionIds) {
 								@Override
 								protected NetworkGameSession build(UDPConnectionManager connectionManager,
 								                                   Rules rules,
 								                                   Map<Id, NetworkGamePlayer> players,
-								                                   Map<Id, UniverseInfo> universes,
-								                                   Collection<UDPConnection> connections,
-								                                   UDPConnection universeRegistrar) {
+								                                   Map<InetSocketAddress, SessionId> sessionIds) {
 									return new NetworkGameSession(connectionManager,
 											rules,
 											players,
-											universes,
-											connections,
-											universeRegistrar) {
+											new HashMap<>(),
+											sessionIds) {
 										@Override
 										public void startGame(Multiverse multiverse) {
 											ui.disposeSession(false);

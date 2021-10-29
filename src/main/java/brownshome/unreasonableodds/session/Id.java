@@ -4,15 +4,14 @@ import java.nio.ByteBuffer;
 
 import brownshome.netcode.annotation.converter.Networkable;
 
-public record Id(int sessionId, int number) implements Networkable {
+public record Id(SessionId sessionId, int number) implements Networkable {
 	public Id(ByteBuffer buffer) {
-		this(Byte.toUnsignedInt(buffer.get()), Byte.toUnsignedInt(buffer.get()));
+		this(new SessionId(buffer), Byte.toUnsignedInt(buffer.get()));
 	}
 
 	@Override
 	public void write(ByteBuffer buffer) {
-		assert sessionId >= 0 && sessionId < (1 << Byte.SIZE);
-		buffer.put((byte) sessionId);
+		sessionId.write(buffer);
 
 		assert number >= 0 && number < (1 << Byte.SIZE);
 		buffer.put((byte) number);
@@ -20,16 +19,16 @@ public record Id(int sessionId, int number) implements Networkable {
 
 	@Override
 	public int size() {
-		return Byte.BYTES + Byte.BYTES;
+		return sessionId.size() + Byte.BYTES;
 	}
 
 	@Override
 	public boolean isSizeExact() {
-		return true;
+		return sessionId.isSizeExact();
 	}
 
 	@Override
 	public boolean isSizeConstant() {
-		return true;
+		return sessionId.isSizeConstant();
 	}
 }

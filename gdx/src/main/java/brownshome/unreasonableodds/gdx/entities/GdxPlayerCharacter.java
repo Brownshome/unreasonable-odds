@@ -3,19 +3,17 @@ package brownshome.unreasonableodds.gdx.entities;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 
-import brownshome.unreasonableodds.*;
-import brownshome.unreasonableodds.entites.Character;
-import brownshome.unreasonableodds.gdx.*;
-import brownshome.unreasonableodds.player.ControllingPlayer;
-import brownshome.unreasonableodds.player.GamePlayer;
-import brownshome.vecmath.MVec2;
-import brownshome.vecmath.Vec2;
-
+import brownshome.unreasonableodds.Rules;
+import brownshome.unreasonableodds.Universe;
 import brownshome.unreasonableodds.components.Position;
-import brownshome.unreasonableodds.entites.*;
-
+import brownshome.unreasonableodds.entites.PlayerCharacter;
+import brownshome.unreasonableodds.gdx.*;
 import brownshome.unreasonableodds.gdx.components.RenderComponent;
 import brownshome.unreasonableodds.gdx.components.Renderable;
+import brownshome.unreasonableodds.session.Id;
+import brownshome.unreasonableodds.session.NetworkGameSession;
+import brownshome.vecmath.MVec2;
+import brownshome.vecmath.Vec2;
 import com.badlogic.gdx.math.Affine2;
 
 public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
@@ -23,29 +21,36 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 	private static final Vec2 SIZE = Vec2.of(CHARACTER_RADIUS * 2, CHARACTER_RADIUS * 2);
 
 	private final RenderComponent renderComponent;
+	private final boolean isMainCharacter;
 
 	protected GdxPlayerCharacter(Position position,
 	                             Vec2 velocity,
-	                             GamePlayer player,
+	                             Id playerId,
 	                             Duration timeTravelEnergy,
-	                             RenderComponent renderComponent) {
-		super(position, velocity, player, timeTravelEnergy);
+	                             RenderComponent renderComponent,
+	                             boolean isMainCharacter) {
+		super(position, velocity, playerId, timeTravelEnergy);
 
 		this.renderComponent = renderComponent;
+		this.isMainCharacter = isMainCharacter;
 	}
 
 	public GdxPlayerCharacter(ByteBuffer buffer, ApplicationResources resources) {
 		super(buffer);
 
 		this.renderComponent = createRenderComponent(position(), resources);
+
+		var session = NetworkGameSession.get();
+		this.isMainCharacter = session.sessionId().equals(playerId().sessionId());
 	}
 
 	public GdxPlayerCharacter(Position position,
 	                          Vec2 velocity,
-	                          GamePlayer player,
+	                          Id playerId,
 	                          Duration timeTravelEnergy,
-	                          ApplicationResources resources) {
-		this(position, velocity, player, timeTravelEnergy, createRenderComponent(position, resources));
+	                          ApplicationResources resources,
+	                          boolean isMainCharacter) {
+		this(position, velocity, playerId, timeTravelEnergy, createRenderComponent(position, resources), isMainCharacter);
 	}
 
 	private static RenderComponent createRenderComponent(Position position, ApplicationResources resources) {
@@ -75,7 +80,7 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 
 	@Override
 	protected PlayerCharacter withTimeTravelEnergy(Duration energy) {
-		return new GdxPlayerCharacter(position(), velocity(), player(), energy, renderComponent);
+		return new GdxPlayerCharacter(position(), velocity(), playerId(), energy, renderComponent, isMainCharacter);
 	}
 
 	@Override
@@ -85,14 +90,15 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 
 		return new GdxPlayerCharacter(position,
 				velocity(),
-				player(),
+				playerId(),
 				timeTravelEnergy(),
-				renderComponent.withPosition(new Position(renderPosition, position.orientation())));
+				renderComponent.withPosition(new Position(renderPosition, position.orientation())),
+				isMainCharacter);
 	}
 
 	@Override
-	protected Character withVelocity(Vec2 velocity) {
-		return new GdxPlayerCharacter(position(), velocity, player(), timeTravelEnergy(), renderComponent);
+	protected GdxPlayerCharacter withVelocity(Vec2 velocity) {
+		return new GdxPlayerCharacter(position(), velocity, playerId(), timeTravelEnergy(), renderComponent, isMainCharacter);
 	}
 
 	@Override
@@ -102,8 +108,7 @@ public class GdxPlayerCharacter extends PlayerCharacter implements Renderable {
 		var gdxBuilder = (GdxUniverse.Builder) builder;
 		gdxBuilder.addRenderable(this);
 
-		if (player() instanceof ControllingPlayer controllingPlayer && controllingPlayer.controller() instanceof GdxCharacterController) {
-			// This is the keyboard controlled one
+		if (isMainCharacter) {
 			gdxBuilder.flagUniverseAsActive();
 		}
 	}

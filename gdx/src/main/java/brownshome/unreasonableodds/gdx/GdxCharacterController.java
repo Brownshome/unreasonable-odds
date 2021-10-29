@@ -7,6 +7,7 @@ import java.util.Queue;
 
 import brownshome.unreasonableodds.CharacterController;
 import brownshome.unreasonableodds.entites.PlayerCharacter;
+import brownshome.unreasonableodds.session.Id;
 import brownshome.vecmath.Vec2;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -65,6 +66,32 @@ public class GdxCharacterController implements CharacterController {
 			a.timeTravel(earliestLocation.plus(distance));
 
 			return true;
+		});
+	}
+
+	public void jumpLeft() {
+		queuedActions.add(a -> {
+			Id id = a.leftJumpId();
+
+			if (id != null) {
+				a.jumpUniverse(id);
+				return true;
+			}
+
+			return false;
+		});
+	}
+
+	public void jumpRight() {
+		queuedActions.add(a -> {
+			Id id = a.rightJumpId();
+
+			if (id != null) {
+				a.jumpUniverse(id);
+				return true;
+			}
+
+			return false;
 		});
 	}
 }

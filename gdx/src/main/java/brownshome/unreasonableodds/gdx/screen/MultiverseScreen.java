@@ -1,9 +1,7 @@
 package brownshome.unreasonableodds.gdx.screen;
 
 import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
-import java.util.Random;
+import java.util.stream.Collectors;
 
 import brownshome.unreasonableodds.Multiverse;
 import brownshome.unreasonableodds.gdx.*;
@@ -13,6 +11,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Affine2;
+import com.badlogic.gdx.utils.Align;
 
 /**
  * A screen that displays a given multiverse
@@ -20,7 +19,6 @@ import com.badlogic.gdx.math.Affine2;
 public class MultiverseScreen extends SubScreen {
 	public static final float SIZE_IN_PIXELS = 512f;
 	private static final float UNIVERSE_SIZE = SIZE_IN_PIXELS * 12 / 16;
-	private static final float INTER_UNIVERSE_STRIDE = SIZE_IN_PIXELS;
 
 	private final ApplicationResources resources;
 	private final Multiverse multiverse;
@@ -52,15 +50,20 @@ public class MultiverseScreen extends SubScreen {
 
 		Affine2 transform = new Affine2();
 
-		var universes = multiverse.universes();
 
-		for (var universe : universes) {
-			if (((GdxUniverse) universe).isActive()) {
+		for (var universe : multiverse.activeUniverses()) {
+			var gdxUniverse = (GdxUniverse) universe;
+
+			if (gdxUniverse.hasGdxController()) {
+				var ids = multiverse.allUniverseIds();
+				String universesString = ids.stream().map(id -> id.equals(gdxUniverse.id()) ? "[*]" : " * ").collect(Collectors.joining());
+				resources.font().draw(resources.batch(), universesString, 0f, SIZE_IN_PIXELS * 0.45f, 0f, Align.center, false);
 
 				transform.scale(UNIVERSE_SIZE, UNIVERSE_SIZE);
 				transform.translate(-0.5f, -0.5f);
+				gdxUniverse.render(transform);
 
-				((GdxUniverse) universe).render(transform);
+				break;
 			}
 		}
 
@@ -104,6 +107,16 @@ public class MultiverseScreen extends SubScreen {
 		return switch (keycode) {
 			case Input.Keys.F -> {
 				player.timeTravel();
+				yield true;
+			}
+
+			case Input.Keys.Q -> {
+				player.jumpLeft();
+				yield true;
+			}
+
+			case Input.Keys.E -> {
+				player.jumpRight();
 				yield true;
 			}
 

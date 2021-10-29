@@ -15,31 +15,52 @@ public class Multiverse {
 	private final GameSession session;
 	private final Instant epoch;
 
-	private List<Universe> universes;
+	private List<Universe> activeUniverses;
 
-	protected Multiverse(Rules rules, Instant epoch, List<Universe> universes, GameSession session) {
+	protected Multiverse(Rules rules, Instant epoch, List<Universe> activeUniverses, GameSession session) {
 		assert rules != null;
-		assert universes != null;
+		assert activeUniverses != null;
 
 		this.rules = rules;
-		this.universes = universes;
+		this.activeUniverses = activeUniverses;
 		this.epoch = epoch;
+		this.session = session;
 
 		if (isNetworked()) {
-			for (var universe : universes) {
-				network().registerNewUniverse(universe);
+			for (var u : activeUniverses) {
+				network().registerNewUniverse(u);
 			}
 		}
-
-		this.session = session;
 	}
 
 	public final Id allocateUniverseId() {
 		return session.allocateUniverseId();
 	}
 
-	public final List<Universe> universes() {
-		return universes;
+	/**
+	 * A list of all universes that are active, in a single-player session, all universes are active. In multiplayer sessions
+	 * only universes that we are stepping ourselves are considered active.
+	 * @return a list of active universes
+	 */
+	public final Collection<Universe> activeUniverses() {
+		return activeUniverses;
+	}
+
+	public final Universe activeUniverse(Id id) {
+		return activeUniverses.stream().filter(u -> u.id().equals(id)).findAny().orElse(null);
+	}
+
+	/**
+	 * A list of all ids that are in this universe. This is ordered by
+	 * @return the ids in this universe
+	 */
+	public final List<Id> allUniverseIds() {
+		if (isNetworked()) {
+			return network().allUniverseIds();
+		} else {
+			activeUniverses.sort(Comparator.comparing(Universe::branchRecord).thenComparingInt(u -> u.id().sessionId().number()).thenComparingInt(u -> u.id().number()));
+			return activeUniverses.stream().map(Universe::id).toList();
+		}
 	}
 
 	/**
@@ -60,6 +81,10 @@ public class Multiverse {
 
 	public final Instant epoch() {
 		return epoch;
+	}
+
+	public final GameSession session() {
+		return session;
 	}
 
 	/**
@@ -112,10 +137,10 @@ public class Multiverse {
 
 		/**
 		 * Steps a given entity into a universe
-		 * @param universe the universe to interact with
+		 * @param id the universe to interact with
 		 * @param entity the entity to step into the universe
 		 */
-		public abstract void stepInUniverse(Universe universe, Entity entity);
+		public abstract void stepInUniverse(Id id, Entity entity);
 	}
 
 	/**
@@ -151,7 +176,7 @@ public class Multiverse {
 			}
 		}
 
-		Map<Universe, ExternalSteps> externalSteps = new HashMap<>();
+		Map<Id, ExternalSteps> externalSteps = new HashMap<>();
 
 		var newUniverses = new ArrayList<Universe>();
 		var step = new MultiverseStep(stepSize) {
@@ -165,8 +190,8 @@ public class Multiverse {
 			}
 
 			@Override
-			public void stepInUniverse(Universe universe, Entity entity) {
-				externalSteps.compute(universe, (u, external) -> {
+			public void stepInUniverse(Id id, Entity entity) {
+				externalSteps.compute(id, (u, external) -> {
 					if (external == null) {
 						external = new ExternalSteps();
 					}
@@ -178,36 +203,41 @@ public class Multiverse {
 			}
 		};
 
-		for (var universe : universes) {
+		for (var universe : activeUniverses) {
 			var universeStep = universe.step(step);
-			externalSteps.compute(universe, (u, external) -> external != null ? external.addStep(universeStep) : new ExternalSteps(universeStep));
-		}
+			externalSteps.compute(universe.id(), (id, external) -> external != null ? external.addStep(universeStep) : new ExternalSteps(universeStep));
 
-		for (var externalStep : externalSteps.values()) {
-			var nextUniverse = externalStep.step.builder().build();
-			if (nextUniverse != null) {
-				newUniverses.add(nextUniverse);
+			if (isNetworked()) {
+				for (var entity : network().newIncomingEntities(universe.id())) {
+					// They will have already been stepped by the client, don't step them again
+					entity.addToBuilder(universeStep.builder());
+				}
 			}
 		}
 
-		universes = newUniverses;
-	}
-
-	/**
-	 * Returns the set of all reachable universes from the given on within a number of jumps
-	 * @param universe the origin universe
-	 * @param jumps the number of jumps
-	 * @return the set of all reachable universes. This set will not contain the provided universe
-	 */
-	public final Set<Universe> reachableUniverses(Universe universe, int jumps) {
-		if (jumps == 0) {
-			return Collections.emptySet();
+		if (isNetworked()) {
+			network().stepExportedPlayers(step);
 		}
 
-		var result = new HashSet<>(universes);
-		result.remove(universe);
+		for (var e : externalSteps.entrySet()) {
+			var id = e.getKey();
+			var externalStep = e.getValue();
 
-		return result;
+			if (externalStep.step != null) {
+				// The universe is active
+				var nextUniverse = externalStep.step.builder().build();
+				if (nextUniverse != null) {
+					newUniverses.add(nextUniverse);
+				}
+			} else {
+				// Something is stepping into a non-active universe. Network-link the entity out.
+				for (var entity : externalStep.entities) {
+					network().exportEntity(id, entity);
+				}
+			}
+		}
+
+		activeUniverses = newUniverses;
 	}
 
 	/**
@@ -225,8 +255,8 @@ public class Multiverse {
 			}
 
 			@Override
-			public void stepInUniverse(Universe universe, Entity entity) {
-				throw new UnsupportedOperationException("New universes cannot be created from a historical step");
+			public void stepInUniverse(Id universe, Entity entity) {
+				throw new UnsupportedOperationException("Universes cannot be stepped to from a historical step");
 			}
 		};
 

@@ -5,7 +5,7 @@ import brownshome.unreasonableodds.CharacterController;
 import brownshome.unreasonableodds.Universe;
 import brownshome.unreasonableodds.session.Id;
 
-public class LocalGamePlayer extends NetworkGamePlayer implements ControllingPlayer {
+public class LocalGamePlayer extends ControllingNetworkPlayer {
 	private final CharacterController controller;
 
 	public static LocalGamePlayer create(NetworkPlayer player, CharacterController controller) {

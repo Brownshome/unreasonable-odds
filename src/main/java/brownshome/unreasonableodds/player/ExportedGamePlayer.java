@@ -1,15 +1,13 @@
 package brownshome.unreasonableodds.player;
 
 import brownshome.unreasonableodds.CharacterController;
-import brownshome.unreasonableodds.Universe;
 import brownshome.unreasonableodds.session.Id;
 
-public class ExportedGamePlayer extends NetworkGamePlayer implements ControllingPlayer {
+public class ExportedGamePlayer extends ControllingNetworkPlayer {
 	private final CharacterController controller;
+	private final Id hostUniverseId;
 
-	private Id hostUniverseId;
-
-	public static ExportedGamePlayer exportPlayer(LocalGamePlayer player, Id hostUniverse) {
+	public static ExportedGamePlayer exportPlayer(ControllingNetworkPlayer player, Id hostUniverse) {
 		return new ExportedGamePlayer(player.name(), player.id(), player.controller(), hostUniverse);
 	}
 
@@ -20,12 +18,12 @@ public class ExportedGamePlayer extends NetworkGamePlayer implements Controlling
 		this.hostUniverseId = hostUniverseId;
 	}
 
-	public void hostUniverseId(Id hostUniverse) {
-		this.hostUniverseId = hostUniverse;
-	}
-
 	@Override
 	public final CharacterController controller() {
 		return controller;
+	}
+
+	public final Id hostUniverseId() {
+		return hostUniverseId;
 	}
 }

@@ -2,6 +2,7 @@ package brownshome.unreasonableodds.gdx.entities;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.util.Objects;
 
 import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.entites.*;
@@ -9,6 +10,7 @@ import brownshome.unreasonableodds.gdx.ApplicationResources;
 import brownshome.unreasonableodds.gdx.components.RenderComponent;
 import brownshome.unreasonableodds.gdx.tile.GdxClosedTile;
 import brownshome.unreasonableodds.player.GamePlayer;
+import brownshome.unreasonableodds.session.Id;
 import brownshome.unreasonableodds.session.NetworkGameSession;
 import brownshome.unreasonableodds.tile.*;
 import brownshome.vecmath.Vec2;
@@ -25,8 +27,8 @@ public class GdxEntityFactory extends EntityFactory {
 	}
 
 	@Override
-	public GdxPlayerCharacter createPlayerCharacter(Position position, Vec2 velocity, Duration timeTravelEnergy, GamePlayer player) {
-		return new GdxPlayerCharacter(position, velocity, player, timeTravelEnergy, resources);
+	public GdxPlayerCharacter createPlayerCharacter(Position position, Vec2 velocity, Duration timeTravelEnergy, Id playerId) {
+		return new GdxPlayerCharacter(position, velocity, playerId, timeTravelEnergy, resources, true);
 	}
 
 	@Override
@@ -44,26 +46,19 @@ public class GdxEntityFactory extends EntityFactory {
 	}
 
 	@Override
-	protected Entity read(int id, ByteBuffer buffer) {
+	public Entity read(int id, ByteBuffer buffer) {
 		return switch (KnownEntities.values()[id]) {
 			case HISTORICAL_CHARACTER -> new GdxHistoricalCharacter(buffer, resources);
 			case JUMP_SCAR -> new GdxJumpScar(buffer, resources);
 			case PLAYER_CHARACTER -> new GdxPlayerCharacter(buffer, resources);
-			case STATIC_MAP -> {
-				var session = NetworkGameSession.get();
-				if (session.map() == null) {
-					session.map(new StaticMap(buffer) {
-						@Override
-						protected Tile readTile(int id, ByteBuffer buffer) {
-							return switch (KnownTiles.values()[id]) {
-								case CLOSED -> new GdxClosedTile(buffer, resources);
-							};
-						}
-					});
+			case STATIC_MAP -> Objects.requireNonNullElseGet(NetworkGameSession.get().map(), () -> new StaticMap(buffer) {
+				@Override
+				protected Tile readTile(int id, ByteBuffer buffer) {
+					return switch (KnownTiles.values()[id]) {
+						case CLOSED -> new GdxClosedTile(buffer, resources);
+					};
 				}
-
-				yield session.map();
-			}
+			});
 		};
 	}
 }

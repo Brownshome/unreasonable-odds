@@ -5,21 +5,23 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
+import brownshome.netcode.annotation.converter.Converter;
 import brownshome.netcode.annotation.converter.Networkable;
 import brownshome.unreasonableodds.collision.CollisionDetector;
 import brownshome.unreasonableodds.components.Collidable;
 import brownshome.unreasonableodds.entites.Entity;
+import brownshome.unreasonableodds.entites.PlayerCharacter;
 import brownshome.unreasonableodds.history.BranchRecord;
 import brownshome.unreasonableodds.history.History;
 import brownshome.unreasonableodds.packets.converters.EntityConverter;
 import brownshome.unreasonableodds.packets.converters.InstantConverter;
+import brownshome.unreasonableodds.player.ExportedGamePlayer;
 import brownshome.unreasonableodds.session.Id;
 
 /**
- * A single universe in the multiverse. This is an immutable object. The ordering of universes is based on the times that
- * they were split off from each other.
+ * A single universe in the multiverse. This is an immutable object.
  */
-public class Universe implements Comparable<Universe>, Networkable {
+public class Universe implements Networkable {
 	private final Instant now;
 	private final List<Entity> entities;
 	private final CollisionDetector collisionDetector;
@@ -76,18 +78,20 @@ public class Universe implements Comparable<Universe>, Networkable {
 
 	/**
 	 * Creates a builder for a universe offset in time from this one by a given amount
+	 *
+	 * @param id the id of the new universe
 	 * @param offset the offset duration
 	 * @return a builder
 	 */
-	public final Builder builder(Duration offset) {
-		return builder(now.plus(offset), branchRecord);
+	public final Builder builder(Id id, Duration offset) {
+		return builder(id, now.plus(offset), branchRecord);
 	}
 
 	public final Builder newBranchBuilder() {
-		return builder(now, branchRecord.newBranch(Duration.between(beginning(), now)));
+		return builder(id, now, branchRecord.newBranch(Duration.between(beginning(), now)));
 	}
 
-	protected Builder builder(Instant now, BranchRecord branchRecord) {
+	protected Builder builder(Id id, Instant now, BranchRecord branchRecord) {
 		return new Builder(now, branchRecord);
 	}
 
@@ -157,9 +161,13 @@ public class Universe implements Comparable<Universe>, Networkable {
 		private final Multiverse.MultiverseStep multiverseStep;
 		private final Builder builder;
 
-		private UniverseStep(Multiverse.MultiverseStep multiverseStep) {
+		private UniverseStep(Multiverse.MultiverseStep multiverseStep, Builder builder) {
 			this.multiverseStep = multiverseStep;
-			this.builder = Universe.this.builder(multiverseStep.stepSize());
+			this.builder = builder;
+		}
+
+		private UniverseStep(Id id, Multiverse.MultiverseStep multiverseStep) {
+			this(multiverseStep, Universe.this.builder(id, multiverseStep.stepSize()));
 		}
 
 		/**
@@ -242,6 +250,18 @@ public class Universe implements Comparable<Universe>, Networkable {
 		return step(multiverseStep.multiverse().allocateUniverseId(), multiverseStep);
 	}
 
+	public List<Entity> exportedStep(Multiverse.MultiverseStep multiverseStep, ExportedGamePlayer player) {
+		var step = new UniverseStep(id, multiverseStep);
+
+		for (var s : entities) {
+			if (s instanceof PlayerCharacter playerCharacter && playerCharacter.playerId().equals(player.id())) {
+				playerCharacter.step(step);
+			}
+		}
+
+		return step.builder().entities();
+	}
+
 	/**
 	 * Steps this universe forward within the context of a parent multiverse step
 	 * @param id the ID of the new universe
@@ -249,18 +269,13 @@ public class Universe implements Comparable<Universe>, Networkable {
 	 * @return a universe step that can be used to further interact with the newly created universe
 	 */
 	protected UniverseStep step(Id id, Multiverse.MultiverseStep multiverseStep) {
-		var step = new UniverseStep(multiverseStep);
+		var step = new UniverseStep(id, multiverseStep);
 
 		for (var s : entities) {
 			s.step(step);
 		}
 
 		return step;
-	}
-
-	@Override
-	public int compareTo(Universe o) {
-		return branchRecord.compareTo(o.branchRecord);
 	}
 
 	/**
@@ -292,6 +307,14 @@ public class Universe implements Comparable<Universe>, Networkable {
 
 	@Override
 	public void write(ByteBuffer buffer) {
+		write(buffer, EntityConverter.CompressMap.INSTANCE);
+	}
+
+	public void writeWithMap(ByteBuffer buffer) {
+		write(buffer, EntityConverter.INSTANCE);
+	}
+
+	protected void write(ByteBuffer buffer, Converter<Entity> entityConverter) {
 		id.write(buffer);
 		InstantConverter.INSTANCE.write(buffer, now);
 
@@ -300,7 +323,7 @@ public class Universe implements Comparable<Universe>, Networkable {
 		buffer.putShort((short) length);
 
 		for (var entity : entities) {
-			EntityConverter.INSTANCE.write(buffer, entity);
+			entityConverter.write(buffer, entity);
 		}
 	}
 

@@ -32,7 +32,7 @@ public class StaticMap extends Entity {
 	}
 
 	@Override
-	protected int id() {
+	public int id() {
 		return KnownEntities.STATIC_MAP.id();
 	}
 

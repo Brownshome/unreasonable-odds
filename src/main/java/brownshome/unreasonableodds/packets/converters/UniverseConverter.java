@@ -6,7 +6,20 @@ import brownshome.netcode.annotation.converter.Converter;
 import brownshome.unreasonableodds.Universe;
 import brownshome.unreasonableodds.session.NetworkGameSession;
 
-public final class UniverseConverter implements Converter<Universe> {
+public sealed class UniverseConverter implements Converter<Universe> {
+	public static final class WithMap extends UniverseConverter {
+		@Override
+		public Universe read(ByteBuffer buffer) {
+			var session = NetworkGameSession.get();
+			return session.rules().readUniverseWithMap(buffer);
+		}
+
+		@Override
+		public void write(ByteBuffer buffer, Universe object) {
+			object.writeWithMap(buffer);
+		}
+	}
+
 	@Override
 	public void write(ByteBuffer buffer, Universe object) {
 		object.write(buffer);

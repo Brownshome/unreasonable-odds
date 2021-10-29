@@ -57,18 +57,18 @@ public abstract class NetworkSession implements AutoCloseable, Session {
 
 	private final UDPConnectionManager connectionManager;
 
-	private boolean hasSessionId = false;
-	private int sessionId = Integer.MAX_VALUE;
+	private SessionId sessionId = null;
 
-	private final Map<InetSocketAddress, Integer> sessionIds = new HashMap<>();
+	private final Map<InetSocketAddress, SessionId> sessionIds;
 
 	protected NetworkSession(UDPConnectionManager connectionManager, Executor executor) {
-		this(connectionManager);
+		this(connectionManager, new HashMap<>());
 		connectionManager.registerExecutor("default", executor, Integer.MAX_VALUE);
 	}
 
-	protected NetworkSession(UDPConnectionManager connectionManager) {
+	protected NetworkSession(UDPConnectionManager connectionManager, Map<InetSocketAddress, SessionId> sessionIds) {
 		this.connectionManager = connectionManager;
+		this.sessionIds = sessionIds;
 	}
 
 	public final void markThreadAsSessionThread() {
@@ -86,7 +86,7 @@ public abstract class NetworkSession implements AutoCloseable, Session {
 		return List.of(new BaseSchema(), new SessionSchema(), new LobbySchema(), new GameSchema());
 	}
 
-	public void sessionLeft(int sessionId) { }
+	public void sessionLeft(SessionId sessionId) { }
 
 	@Override
 	public void close() {
@@ -94,35 +94,34 @@ public abstract class NetworkSession implements AutoCloseable, Session {
 	}
 
 	public void sessionId(int id) {
-		if (hasSessionId) {
+		if (sessionId != null) {
 			throw new IllegalStateException();
 		}
 
-		hasSessionId = true;
-		sessionId = id;
+		sessionId = SessionId.createLocal(id);
 	}
 
-	protected final int sessionId() {
-		assert hasSessionId;
+	public final SessionId sessionId() {
+		assert sessionId != null;
 		return sessionId;
 	}
 
-	/**
-	 * Gets of makes a session id
-	 * @param address the address of the session
-	 * @param func a function to produce a session id
-	 * @return the session id
-	 */
-	protected final int getOrMakeSessionId(InetSocketAddress address, ToIntFunction<InetSocketAddress> func) {
-		return sessionIds.computeIfAbsent(address, func::applyAsInt);
-	}
+	public final SessionId sessionId(InetSocketAddress address) {
+		var result = sessionIds.get(address);
 
-	public final int sessionId(InetSocketAddress address) {
-		return sessionIds.get(address);
+		if (result == null) {
+			throw new IllegalArgumentException("There is no session registered for address %s".formatted(address));
+		}
+
+		return result;
 	}
 
 	@Override
 	public String toString() {
-		return hasSessionId ? "Session " + sessionId : "Session (no id)";
+		return sessionId != null ? "Session " + sessionId : "Session (no id)";
+	}
+
+	protected final Map<InetSocketAddress, SessionId> sessionIds() {
+		return sessionIds;
 	}
 }

@@ -55,7 +55,7 @@ public class JumpScar extends Entity {
 	}
 
 	@Override
-	protected int id() {
+	public int id() {
 		return KnownEntities.JUMP_SCAR.id();
 	}
 

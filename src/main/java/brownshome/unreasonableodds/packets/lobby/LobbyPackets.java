@@ -32,7 +32,7 @@ final class LobbyPackets {
 
 		var udpConnection = (UDPConnection) connection;
 
-		int sessionId = session.getOrMakeSessionId(udpConnection.address());
+		SessionId sessionId = session.getOrMakeSessionId(udpConnection.address());
 		Id id = new Id(sessionId, Byte.toUnsignedInt(number));
 
 		session.getOrMakePlayer(id, udpConnection.address()).name(name);
@@ -53,7 +53,7 @@ final class LobbyPackets {
 
 		var udpConnection = (UDPConnection) connection;
 
-		int sessionId = session.sessionId(udpConnection.address());
+		var sessionId = session.sessionId(udpConnection.address());
 		Id id = new Id(sessionId, Byte.toUnsignedInt(number));
 
 		session.player(id).ready(ready);

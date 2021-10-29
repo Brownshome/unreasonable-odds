@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 import brownshome.netcode.udp.UDPConnectionManager;
 import brownshome.unreasonableodds.Rules;
 import brownshome.unreasonableodds.Universe;
+import brownshome.unreasonableodds.packets.game.CreateGameSessionPacket;
 import brownshome.unreasonableodds.packets.lobby.*;
 import brownshome.unreasonableodds.packets.session.LeaveSessionPacket;
 import brownshome.unreasonableodds.player.*;
@@ -28,10 +29,11 @@ public abstract class HostLobbySession extends NetworkLobbySession implements Lo
 	private final NetworkLobbyPlayer localPlayer;
 
 	private final Map<Id, ImportedLobbyPlayer> players;
-	private final AtomicInteger nextSessionId = new AtomicInteger();
+	private final AtomicInteger nextSessionId = new AtomicInteger(SessionId.HOST_NUMBER);
 
 	{
 		sessionId(allocateSessionId());
+		assert sessionId().number() == SessionId.HOST_NUMBER;
 	}
 
 	protected HostLobbySession(Rules rules, String name, int port, Executor executor) throws IOException {
@@ -101,8 +103,8 @@ public abstract class HostLobbySession extends NetworkLobbySession implements Lo
 		return players.get(id);
 	}
 
-	public int getOrMakeSessionId(InetSocketAddress address) {
-		return getOrMakeSessionId(address, a -> {
+	public SessionId getOrMakeSessionId(InetSocketAddress address) {
+		return sessionIds().computeIfAbsent(address, a -> {
 			var id = allocateSessionId();
 
 			assert id >= 0 && id < (1 << Byte.SIZE);
@@ -111,7 +113,7 @@ public abstract class HostLobbySession extends NetworkLobbySession implements Lo
 			connection.send(new SetSessionIdPacket(null, (byte) id));
 			connection.send(new SetRulesPacket(null, rules));
 
-			return id;
+			return new SessionId(id, a);
 		});
 	}
 
@@ -120,9 +122,9 @@ public abstract class HostLobbySession extends NetworkLobbySession implements Lo
 	}
 
 	@Override
-	public final void sessionLeft(int sessionId) {
-		if (!players.keySet().removeIf(id -> id.sessionId() == sessionId)) {
-			throw new IllegalStateException("Session %d is not connected to this session".formatted(sessionId));
+	public final void sessionLeft(SessionId sessionId) {
+		if (!players.keySet().removeIf(id -> id.sessionId().equals(sessionId))) {
+			throw new IllegalStateException("Session %s is not connected to this session".formatted(sessionId));
 		}
 
 		onPlayersChanged();
@@ -157,26 +159,29 @@ public abstract class HostLobbySession extends NetworkLobbySession implements Lo
 		}
 
 		CompletableFuture.allOf(players.values().stream()
-				.map(ImportedLobbyPlayer::timeSyncComplete).toArray(CompletableFuture[]::new)
+				.map(importedLobbyPlayer -> importedLobbyPlayer.timeSyncComplete().thenCompose(v -> {
+					importedLobbyPlayer.connection().connect(NetworkGameSession.gameSchema());
+					return importedLobbyPlayer.connection().send(new CreateGameSessionPacket(null, sessionIds().values()));
+				})).toArray(CompletableFuture[]::new)
 		).thenRun(() -> {
+			// At this point all client have created game-session are and ready to go!
 			var epoch = rules.gameStartTime();
 
-			var builder = gameSessionBuilder();
+			var builder = gameSessionBuilder(sessionIds());
 			builder.addPlayer(LocalGamePlayer.create(localPlayer, localController()));
 
 			for (var player : players.values()) {
-				builder.addPlayer(NetworkGamePlayer.create(player));
-				builder.addConnection(player.connection());
+				builder.addPlayer(new NetworkGamePlayer(player.name(), player.id()));
 			}
 
 			var gameSession = builder.build();
+			gameSession.markThreadAsSessionThread();
 
-			var map = rules.generateStaticMap(random);
-			gameSession.map(map);
+			gameSession.map(rules.generateStaticMap(random));
 
 			var universes = new ArrayList<Universe>();
 			for (var player : gameSession.players()) {
-				var universe = rules.createUniverse(gameSession, player, epoch, random);
+				var universe = rules.createUniverse(gameSession, player.id(), epoch, random);
 
 				if (player instanceof LocalGamePlayer) {
 					universes.add(universe);

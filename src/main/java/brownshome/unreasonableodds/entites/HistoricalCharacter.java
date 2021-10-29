@@ -37,7 +37,7 @@ public class HistoricalCharacter extends Character {
 	}
 
 	@Override
-	protected final int id() {
+	public final int id() {
 		return KnownEntities.HISTORICAL_CHARACTER.id();
 	}
 

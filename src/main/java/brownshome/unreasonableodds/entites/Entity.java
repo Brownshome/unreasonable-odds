@@ -1,6 +1,5 @@
 package brownshome.unreasonableodds.entites;
 
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 import brownshome.netcode.annotation.converter.Networkable;
@@ -46,23 +45,14 @@ public abstract class Entity implements Networkable {
 		builder.addEntity(this);
 	}
 
-	protected abstract int id();
-
-	static int readId(ByteBuffer buffer) {
-		return Short.toUnsignedInt(buffer.getShort());
-	}
+	public abstract int id();
 
 	@Override
-	public void write(ByteBuffer buffer) {
-		int id = id();
-		assert Short.toUnsignedInt((short) id) == id;
-
-		buffer.putShort((short) id);
-	}
+	public void write(ByteBuffer buffer) { }
 
 	@Override
 	public int size() {
-		return Short.BYTES;
+		return 0;
 	}
 
 	@Override

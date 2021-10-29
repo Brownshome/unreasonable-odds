@@ -22,7 +22,7 @@ public class GdxUniverse extends Universe implements Renderable {
 
 	private final List<Renderable> renderables;
 	private final RenderComponent renderComponent;
-	private final boolean isActive;
+	private final boolean hasGdxController;
 
 	protected GdxUniverse(Id id,
 	                      Instant now,
@@ -32,12 +32,12 @@ public class GdxUniverse extends Universe implements Renderable {
 	                      CollisionDetector collisionDetector,
 	                      List<Renderable> subComponents,
 	                      RenderComponent renderComponent,
-	                      boolean isActive) {
+	                      boolean hasGdxController) {
 		super(id, now, entities, previousHistory, branchRecord, collisionDetector);
 
 		this.renderables = subComponents;
 		this.renderComponent = renderComponent;
-		this.isActive = isActive;
+		this.hasGdxController = hasGdxController;
 	}
 
 	public static GdxUniverse createEmptyUniverse(Id id, Instant beginning, ApplicationResources resources) {
@@ -62,8 +62,8 @@ public class GdxUniverse extends Universe implements Renderable {
 		return renderComponent;
 	}
 
-	public final boolean isActive() {
-		return isActive;
+	public final boolean hasGdxController() {
+		return hasGdxController;
 	}
 
 	public class Builder extends Universe.Builder {
@@ -92,7 +92,7 @@ public class GdxUniverse extends Universe implements Renderable {
 	}
 
 	@Override
-	protected Builder builder(Instant now, BranchRecord branchRecord) {
+	protected Builder builder(Id id, Instant now, BranchRecord branchRecord) {
 		return new Builder(now, branchRecord);
 	}
 

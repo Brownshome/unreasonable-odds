@@ -6,10 +6,12 @@ import java.time.Instant;
 import java.util.*;
 
 import brownshome.netcode.NetworkUtils;
+import brownshome.netcode.annotation.converter.Converter;
 import brownshome.unreasonableodds.components.Position;
 import brownshome.unreasonableodds.entites.*;
 import brownshome.unreasonableodds.generation.FloorTileGenerator;
 import brownshome.unreasonableodds.generation.TileType;
+import brownshome.unreasonableodds.packets.converters.EntityConverter;
 import brownshome.unreasonableodds.packets.converters.InstantConverter;
 import brownshome.unreasonableodds.player.*;
 import brownshome.unreasonableodds.session.Id;
@@ -37,7 +39,7 @@ public abstract class Rules {
 	 * @return the duration required
 	 */
 	public Duration timePerUniverseJump() {
-		return Duration.ofSeconds(20);
+		return Duration.ofSeconds(0);
 	}
 
 	/**
@@ -98,11 +100,11 @@ public abstract class Rules {
 		return new Multiverse(this, epoch, universes, network);
 	}
 
-	public Universe createUniverse(NetworkGameSession session, GamePlayer player, Instant epoch, Random random) {
+	public Universe createUniverse(NetworkGameSession session, Id playerId, Instant epoch, Random random) {
 		var character = entities().createPlayerCharacter(createSpawnPosition(random),
 				Vec2.ZERO,
 				initialJumpEnergy(),
-				player);
+				playerId);
 
 		return createUniverse(session.allocateUniverseId(), List.of(session.map(), character), epoch);
 	}
@@ -118,7 +120,7 @@ public abstract class Rules {
 	}
 
 	protected Universe.Builder universeBuilder(Id id, Instant epoch) {
-		return Universe.createEmptyUniverse(id, epoch).builder(Duration.ZERO);
+		return Universe.createEmptyUniverse(id, epoch).builder(id, Duration.ZERO);
 	}
 
 	// *************** NETWORKING ***************** //
@@ -139,13 +141,21 @@ public abstract class Rules {
 		return getClass().getName();
 	}
 
+	public Universe readUniverseWithMap(ByteBuffer buffer) {
+		return readUniverse(buffer, EntityConverter.INSTANCE);
+	}
+
 	public Universe readUniverse(ByteBuffer buffer) {
+		return readUniverse(buffer, EntityConverter.CompressMap.INSTANCE);
+	}
+
+	protected Universe readUniverse(ByteBuffer buffer, Converter<Entity> entityConverter) {
 		Id id = new Id(buffer);
 		Instant now = InstantConverter.INSTANCE.read(buffer);
 		int numberOfEntities = Short.toUnsignedInt(buffer.getShort());
 		var entities = new ArrayList<Entity>(numberOfEntities);
 		for (int i = 0; i < numberOfEntities; i++) {
-			entities.add(entities().read(buffer));
+			entities.add(entityConverter.read(buffer));
 		}
 
 		return createUniverse(id, entities, now);
